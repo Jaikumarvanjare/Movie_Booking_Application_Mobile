@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../theatres/presentation/theatre_list_screen.dart';
 import '../data/movie.dart';
 
 class MovieDetailsScreen extends StatelessWidget {
@@ -108,9 +109,9 @@ class MovieDetailsScreen extends StatelessWidget {
         minimum: const EdgeInsets.fromLTRB(24, 12, 24, 24),
         child: ElevatedButton.icon(
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Seat selection is the next feature.'),
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => TheatreListScreen(movie: movie),
               ),
             );
           },
