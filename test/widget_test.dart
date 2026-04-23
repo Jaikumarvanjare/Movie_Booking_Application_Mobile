@@ -176,8 +176,26 @@ void main() {
     expect(find.text('Proceed to payment'), findsOneWidget);
 
     await tester.tap(find.text('Proceed to payment'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text('Payment flow is the next feature.'), findsOneWidget);
+    expect(find.text('Payment'), findsOneWidget);
+    expect(find.text('Razorpay checkout'), findsOneWidget);
+    expect(find.text('Pay with Razorpay'), findsOneWidget);
+    expect(find.text('Simulate payment failure'), findsOneWidget);
+
+    await tester.tap(find.text('Pay with Razorpay'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Payment successful'), findsOneWidget);
+    expect(find.text('Payment ID'), findsOneWidget);
+    expect(find.text('Back to home'), findsOneWidget);
+
+    await tester.tap(find.text('Back to home'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Find your next show'), findsOneWidget);
+    expect(find.text('Now showing'), findsOneWidget);
+    expect(find.text('Email address'), findsNothing);
+    expect(find.text('Password'), findsNothing);
   });
 }

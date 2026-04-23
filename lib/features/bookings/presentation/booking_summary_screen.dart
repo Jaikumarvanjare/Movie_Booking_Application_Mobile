@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../payments/presentation/payment_screen.dart';
 import '../data/booking_draft.dart';
 
 class BookingSummaryScreen extends StatelessWidget {
@@ -111,9 +112,10 @@ class BookingSummaryScreen extends StatelessWidget {
                 ),
                 FilledButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Payment flow is the next feature.'),
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            PaymentScreen(bookingDraft: bookingDraft),
                       ),
                     );
                   },
