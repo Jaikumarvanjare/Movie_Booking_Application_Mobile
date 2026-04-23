@@ -162,11 +162,22 @@ void main() {
     expect(find.text('Total Rs 480'), findsOneWidget);
 
     await tester.tap(find.text('Review booking'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
+    expect(find.text('Booking summary'), findsOneWidget);
     expect(
-      find.text('Booking review is next for seats A1, A2.'),
+      find.text('Review your movie, theatre, show, and seats before payment.'),
       findsOneWidget,
     );
+    expect(find.text('Selected seats'), findsOneWidget);
+    expect(find.text('No. of seats'), findsOneWidget);
+    expect(find.text('Total amount'), findsOneWidget);
+    expect(find.text('Rs 480'), findsOneWidget);
+    expect(find.text('Proceed to payment'), findsOneWidget);
+
+    await tester.tap(find.text('Proceed to payment'));
+    await tester.pump();
+
+    expect(find.text('Payment flow is the next feature.'), findsOneWidget);
   });
 }

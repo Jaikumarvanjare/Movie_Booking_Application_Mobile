@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../bookings/data/booking_draft.dart';
+import '../../bookings/presentation/booking_summary_screen.dart';
 import '../../movies/data/movie.dart';
 import '../../shows/data/movie_show.dart';
 import '../../theatres/data/theatre.dart';
@@ -53,9 +55,17 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       return;
     }
 
-    final labels = _selectedSeats.map((seat) => seat.label).join(', ');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Booking review is next for seats $labels.')),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BookingSummaryScreen(
+          bookingDraft: BookingDraft(
+            movie: widget.movie,
+            theatre: widget.theatre,
+            show: widget.show,
+            selectedSeats: _selectedSeats,
+          ),
+        ),
+      ),
     );
   }
 
