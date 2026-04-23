@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/presentation/login_screen.dart';
+
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
@@ -91,8 +93,14 @@ class SplashScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
-                    child: const Text('Step 1 complete'),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const LoginScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text('Continue to login'),
                   ),
                 ),
               ],
