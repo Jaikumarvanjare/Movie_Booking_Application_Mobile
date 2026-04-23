@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../movies/presentation/home_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -8,6 +10,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static const _demoEmail = 'guest@cinebook.app';
+  static const _demoPassword = 'secret1';
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -26,10 +31,20 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Login is ready for API integration.'),
-      ),
+    final email = _emailController.text.trim().toLowerCase();
+    final password = _passwordController.text;
+
+    if (email != _demoEmail || password != _demoPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Use the demo login until backend auth is connected.'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
     );
   }
 
@@ -44,6 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextFormField(
+              key: const ValueKey('loginEmailField'),
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
@@ -56,6 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              key: const ValueKey('loginPasswordField'),
               controller: _passwordController,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
@@ -94,9 +111,14 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: _submit,
-              child: const Text('Log in'),
+            ElevatedButton(onPressed: _submit, child: const Text('Log in')),
+            const SizedBox(height: 12),
+            Text(
+              'Demo login: $_demoEmail / $_demoPassword',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 18),
             _AuthTextAction(
@@ -104,9 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
               action: 'Create account',
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const SignupScreen(),
-                  ),
+                  MaterialPageRoute<void>(builder: (_) => const SignupScreen()),
                 );
               },
             ),
@@ -149,9 +169,7 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Signup is ready for API integration.'),
-      ),
+      const SnackBar(content: Text('Signup is ready for API integration.')),
     );
   }
 
@@ -418,10 +436,7 @@ class _AuthScaffold extends StatelessWidget {
 }
 
 class _BrandBadge extends StatelessWidget {
-  const _BrandBadge({
-    required this.colorScheme,
-    required this.theme,
-  });
+  const _BrandBadge({required this.colorScheme, required this.theme});
 
   final ColorScheme colorScheme;
   final ThemeData theme;
@@ -464,14 +479,8 @@ class _AuthTextAction extends StatelessWidget {
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Text(
-          prompt,
-          style: theme.textTheme.bodyMedium,
-        ),
-        TextButton(
-          onPressed: onPressed,
-          child: Text(action),
-        ),
+        Text(prompt, style: theme.textTheme.bodyMedium),
+        TextButton(onPressed: onPressed, child: Text(action)),
       ],
     );
   }
