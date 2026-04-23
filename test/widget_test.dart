@@ -80,4 +80,31 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('Movie card opens details screen', (WidgetTester tester) async {
+    await tester.pumpWidget(const CineBookApp());
+
+    await tester.tap(find.text('Continue to login'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('loginEmailField')),
+      'guest@cinebook.app',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('loginPasswordField')),
+      'secret1',
+    );
+    await tester.tap(find.text('Log in'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Midnight Metro').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Story'), findsOneWidget);
+    expect(find.text('Cast'), findsOneWidget);
+    expect(find.text('Available formats'), findsOneWidget);
+    expect(find.text('Select showtime'), findsOneWidget);
+    expect(find.text('Book seats'), findsOneWidget);
+  });
 }

@@ -1,58 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../data/movie.dart';
+import 'movie_details_screen.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  static const _nowShowingMovies = [
-    _Movie(
-      title: 'Midnight Metro',
-      genre: 'Action thriller',
-      runtime: '2h 08m',
-      rating: '4.8',
-      badge: 'IMAX',
-      primaryColor: Color(0xFF2A2118),
-      accentColor: Color(0xFFC44536),
-    ),
-    _Movie(
-      title: 'City of Stars',
-      genre: 'Romance drama',
-      runtime: '1h 54m',
-      rating: '4.6',
-      badge: 'Dolby',
-      primaryColor: Color(0xFF683B2B),
-      accentColor: Color(0xFFFFB45E),
-    ),
-    _Movie(
-      title: 'Orbit Nine',
-      genre: 'Sci-fi adventure',
-      runtime: '2h 21m',
-      rating: '4.9',
-      badge: '3D',
-      primaryColor: Color(0xFF233142),
-      accentColor: Color(0xFFFFE0B8),
-    ),
-  ];
-
-  static const _comingSoonMovies = [
-    _Movie(
-      title: 'The Last Balcony',
-      genre: 'Mystery',
-      runtime: 'Releasing Fri',
-      rating: '92%',
-      badge: 'Pre-book',
-      primaryColor: Color(0xFF5C4630),
-      accentColor: Color(0xFFFFF4E6),
-    ),
-    _Movie(
-      title: 'Laugh Track Live',
-      genre: 'Comedy',
-      runtime: 'Releasing May 02',
-      rating: '88%',
-      badge: 'Alert me',
-      primaryColor: Color(0xFF2F4858),
-      accentColor: Color(0xFFFFB45E),
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -89,9 +41,13 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
                   child: _FeaturedMovieCard(
-                    movie: _nowShowingMovies.first,
+                    movie: sampleNowShowingMovies.first,
                     theme: theme,
                     colorScheme: colorScheme,
+                    onPressed: () => _openMovieDetails(
+                      context,
+                      sampleNowShowingMovies.first,
+                    ),
                   ),
                 ),
               ),
@@ -99,8 +55,9 @@ class HomeScreen extends StatelessWidget {
               SliverToBoxAdapter(
                 child: _HorizontalMovieSection(
                   title: 'Now showing',
-                  movies: _nowShowingMovies,
+                  movies: sampleNowShowingMovies,
                   theme: theme,
+                  onMoviePressed: (movie) => _openMovieDetails(context, movie),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 28)),
@@ -108,9 +65,11 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
                 sliver: SliverToBoxAdapter(
                   child: _ComingSoonSection(
-                    movies: _comingSoonMovies,
+                    movies: sampleComingSoonMovies,
                     theme: theme,
                     colorScheme: colorScheme,
+                    onMoviePressed: (movie) =>
+                        _openMovieDetails(context, movie),
                   ),
                 ),
               ),
@@ -138,6 +97,12 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _openMovieDetails(BuildContext context, Movie movie) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => MovieDetailsScreen(movie: movie)),
     );
   }
 }
@@ -217,72 +182,77 @@ class _FeaturedMovieCard extends StatelessWidget {
     required this.movie,
     required this.theme,
     required this.colorScheme,
+    required this.onPressed,
   });
 
-  final _Movie movie;
+  final Movie movie;
   final ThemeData theme;
   final ColorScheme colorScheme;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [movie.primaryColor, movie.accentColor],
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [movie.primaryColor, movie.accentColor],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: movie.primaryColor.withValues(alpha: 0.22),
+              blurRadius: 28,
+              offset: const Offset(0, 18),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: movie.primaryColor.withValues(alpha: 0.22),
-            blurRadius: 28,
-            offset: const Offset(0, 18),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _MovieBadge(label: 'Featured tonight'),
-              const Spacer(),
-              Icon(Icons.star_rounded, color: colorScheme.primaryContainer),
-              const SizedBox(width: 4),
-              Text(
-                movie.rating,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _MovieBadge(label: 'Featured tonight'),
+                const Spacer(),
+                Icon(Icons.star_rounded, color: colorScheme.primaryContainer),
+                const SizedBox(width: 4),
+                Text(
+                  movie.rating,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 42),
+            Text(
+              movie.name,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                height: 1.05,
               ),
-            ],
-          ),
-          const SizedBox(height: 42),
-          Text(
-            movie.title,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              height: 1.05,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${movie.genre} • ${movie.runtime}',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.82),
+            const SizedBox(height: 8),
+            Text(
+              '${movie.genre} - ${movie.runtime}',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white.withValues(alpha: 0.82),
+              ),
             ),
-          ),
-          const SizedBox(height: 22),
-          FilledButton.tonalIcon(
-            onPressed: () {},
-            icon: const Icon(Icons.event_seat_rounded),
-            label: const Text('Book tickets'),
-          ),
-        ],
+            const SizedBox(height: 22),
+            FilledButton.tonalIcon(
+              onPressed: onPressed,
+              icon: const Icon(Icons.event_seat_rounded),
+              label: const Text('Book tickets'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -293,11 +263,13 @@ class _HorizontalMovieSection extends StatelessWidget {
     required this.title,
     required this.movies,
     required this.theme,
+    required this.onMoviePressed,
   });
 
   final String title;
-  final List<_Movie> movies;
+  final List<Movie> movies;
   final ThemeData theme;
+  final ValueChanged<Movie> onMoviePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -315,7 +287,12 @@ class _HorizontalMovieSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             scrollDirection: Axis.horizontal,
             itemBuilder: (context, index) {
-              return _MoviePosterCard(movie: movies[index], theme: theme);
+              final movie = movies[index];
+              return _MoviePosterCard(
+                movie: movie,
+                theme: theme,
+                onPressed: () => onMoviePressed(movie),
+              );
             },
             separatorBuilder: (context, index) => const SizedBox(width: 14),
             itemCount: movies.length,
@@ -327,60 +304,68 @@ class _HorizontalMovieSection extends StatelessWidget {
 }
 
 class _MoviePosterCard extends StatelessWidget {
-  const _MoviePosterCard({required this.movie, required this.theme});
+  const _MoviePosterCard({
+    required this.movie,
+    required this.theme,
+    required this.onPressed,
+  });
 
-  final _Movie movie;
+  final Movie movie;
   final ThemeData theme;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 150,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [movie.primaryColor, movie.accentColor],
+    return GestureDetector(
+      onTap: onPressed,
+      child: SizedBox(
+        width: 150,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [movie.primaryColor, movie.accentColor],
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: _MovieBadge(label: movie.badge),
-              ),
-              const Spacer(),
-              Icon(
-                Icons.movie_creation_outlined,
-                color: Colors.white.withValues(alpha: 0.82),
-                size: 32,
-              ),
-              const SizedBox(height: 14),
-              Text(
-                movie.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  height: 1.08,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: _MovieBadge(label: movie.badge),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                movie.genre,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.78),
+                const Spacer(),
+                Icon(
+                  Icons.movie_creation_outlined,
+                  color: Colors.white.withValues(alpha: 0.82),
+                  size: 32,
                 ),
-              ),
-            ],
+                const SizedBox(height: 14),
+                Text(
+                  movie.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    height: 1.08,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  movie.genre,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.78),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -393,11 +378,13 @@ class _ComingSoonSection extends StatelessWidget {
     required this.movies,
     required this.theme,
     required this.colorScheme,
+    required this.onMoviePressed,
   });
 
-  final List<_Movie> movies;
+  final List<Movie> movies;
   final ThemeData theme;
   final ColorScheme colorScheme;
+  final ValueChanged<Movie> onMoviePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -411,6 +398,7 @@ class _ComingSoonSection extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: Card(
               child: ListTile(
+                onTap: () => onMoviePressed(movie),
                 contentPadding: const EdgeInsets.all(14),
                 leading: Container(
                   width: 54,
@@ -422,12 +410,12 @@ class _ComingSoonSection extends StatelessWidget {
                   child: Icon(Icons.live_tv_rounded, color: movie.accentColor),
                 ),
                 title: Text(
-                  movie.title,
+                  movie.name,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                subtitle: Text('${movie.genre} • ${movie.runtime}'),
+                subtitle: Text('${movie.genre} - ${movie.runtime}'),
                 trailing: Text(
                   movie.badge,
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -497,24 +485,4 @@ class _MovieBadge extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Movie {
-  const _Movie({
-    required this.title,
-    required this.genre,
-    required this.runtime,
-    required this.rating,
-    required this.badge,
-    required this.primaryColor,
-    required this.accentColor,
-  });
-
-  final String title;
-  final String genre;
-  final String runtime;
-  final String rating;
-  final String badge;
-  final Color primaryColor;
-  final Color accentColor;
 }
