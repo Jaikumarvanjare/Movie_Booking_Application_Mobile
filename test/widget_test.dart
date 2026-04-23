@@ -108,7 +108,7 @@ void main() {
     expect(find.text('Book seats'), findsOneWidget);
   });
 
-  testWidgets('Movie details opens theatre and show selection', (
+  testWidgets('Movie details opens theatre, show, and seat selection', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const CineBookApp());
@@ -144,8 +144,29 @@ void main() {
     expect(find.text('Continue to seats'), findsWidgets);
 
     await tester.tap(find.text('Continue to seats').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Select seats'), findsOneWidget);
+    expect(
+      find.text('Midnight Metro at Nova Cinemas - 10:30 AM'),
+      findsOneWidget,
+    );
+    expect(find.text('0 seats selected'), findsOneWidget);
+
+    await tester.tap(find.text('A1'));
+    await tester.tap(find.text('A2'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 seats selected'), findsOneWidget);
+    expect(find.text('A1, A2'), findsOneWidget);
+    expect(find.text('Total Rs 480'), findsOneWidget);
+
+    await tester.tap(find.text('Review booking'));
     await tester.pump();
 
-    expect(find.text('Seat selection is the next feature.'), findsOneWidget);
+    expect(
+      find.text('Booking review is next for seats A1, A2.'),
+      findsOneWidget,
+    );
   });
 }

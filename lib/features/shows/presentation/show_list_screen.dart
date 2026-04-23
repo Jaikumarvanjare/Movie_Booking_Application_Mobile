@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../movies/data/movie.dart';
+import '../../seats/presentation/seat_selection_screen.dart';
 import '../../theatres/data/theatre.dart';
 import '../data/movie_show.dart';
 
@@ -44,7 +45,12 @@ class ShowListScreen extends StatelessWidget {
                     ? const SliverToBoxAdapter(child: _EmptyShowsCard())
                     : SliverList.separated(
                         itemBuilder: (context, index) {
-                          return _ShowCard(show: shows[index], theme: theme);
+                          return _ShowCard(
+                            movie: movie,
+                            theatre: theatre,
+                            show: shows[index],
+                            theme: theme,
+                          );
                         },
                         separatorBuilder: (context, index) =>
                             const SizedBox(height: 14),
@@ -102,8 +108,15 @@ class _ShowHeader extends StatelessWidget {
 }
 
 class _ShowCard extends StatelessWidget {
-  const _ShowCard({required this.show, required this.theme});
+  const _ShowCard({
+    required this.movie,
+    required this.theatre,
+    required this.show,
+    required this.theme,
+  });
 
+  final Movie movie;
+  final Theatre theatre;
   final MovieShow show;
   final ThemeData theme;
 
@@ -170,9 +183,13 @@ class _ShowCard extends StatelessWidget {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Seat selection is the next feature.'),
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => SeatSelectionScreen(
+                        movie: movie,
+                        theatre: theatre,
+                        show: show,
+                      ),
                     ),
                   );
                 },
