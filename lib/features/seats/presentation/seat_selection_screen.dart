@@ -26,7 +26,7 @@ class SeatSelectionScreen extends StatefulWidget {
 class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   final Set<String> _selectedSeatIds = {};
 
-  late final List<Seat> _seats = sampleSeatsForShow(widget.show.id);
+  late final List<Seat> _seats = seatsForShow(widget.show);
 
   double get _totalCost => _selectedSeatIds.length * widget.show.price;
 
@@ -76,6 +76,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     final selectedSeatsLabel = _selectedSeats.isEmpty
         ? 'No seats selected'
         : _selectedSeats.map((seat) => seat.label).join(', ');
+    final hasSeatLayout = _seats.isNotEmpty;
 
     return Scaffold(
       body: Container(
@@ -116,11 +117,13 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
                 sliver: SliverToBoxAdapter(
-                  child: _SeatGrid(
-                    seats: _seats,
-                    selectedSeatIds: _selectedSeatIds,
-                    onSeatPressed: _toggleSeat,
-                  ),
+                  child: hasSeatLayout
+                      ? _SeatGrid(
+                          seats: _seats,
+                          selectedSeatIds: _selectedSeatIds,
+                          onSeatPressed: _toggleSeat,
+                        )
+                      : const _SeatLayoutUnavailableCard(),
                 ),
               ),
             ],
@@ -161,7 +164,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                     ),
                     const Spacer(),
                     FilledButton(
-                      onPressed: _selectedSeatIds.isEmpty
+                      onPressed: !hasSeatLayout || _selectedSeatIds.isEmpty
                           ? null
                           : _continueToReview,
                       child: const Text('Review booking'),
@@ -227,7 +230,7 @@ class _SeatHeader extends StatelessWidget {
             ),
             Chip(
               avatar: const Icon(Icons.high_quality_rounded, size: 18),
-              label: Text(show.format),
+              label: Text(show.formatLabel),
             ),
             Chip(
               avatar: const Icon(Icons.currency_rupee_rounded, size: 18),
@@ -357,6 +360,23 @@ class _SeatGrid extends StatelessWidget {
             onPressed: () => onSeatPressed(seat),
           ),
       ],
+    );
+  }
+}
+
+class _SeatLayoutUnavailableCard extends StatelessWidget {
+  const _SeatLayoutUnavailableCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Text(
+          'Seat layout is not available from the backend for this show yet.',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.45),
+        ),
+      ),
     );
   }
 }

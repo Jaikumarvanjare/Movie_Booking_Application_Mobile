@@ -1,124 +1,145 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../theatres/presentation/theatre_list_screen.dart';
 import '../data/movie.dart';
+import '../data/movie_repository.dart';
 
-class MovieDetailsScreen extends StatelessWidget {
+class MovieDetailsScreen extends StatefulWidget {
   const MovieDetailsScreen({required this.movie, super.key});
 
   final Movie movie;
 
   @override
+  State<MovieDetailsScreen> createState() => _MovieDetailsScreenState();
+}
+
+class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
+  late Future<Movie> _movieFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _movieFuture = context.read<MovieRepository>().fetchMovieById(
+      widget.movie.id,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
-          ),
-        ),
-        child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                sliver: SliverToBoxAdapter(
-                  child: _DetailsHero(movie: movie, theme: theme),
-                ),
+    return FutureBuilder<Movie>(
+      future: _movieFuture,
+      builder: (context, snapshot) {
+        final movie = snapshot.data ?? widget.movie;
+
+        return Scaffold(
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
               ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        movie.name,
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          color: const Color(0xFF2A2118),
-                          fontWeight: FontWeight.w900,
-                          height: 1.05,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${movie.genre} - ${movie.runtime} - ${movie.language}',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: const Color(0xFF5C4630),
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      _InfoGrid(movie: movie),
-                      const SizedBox(height: 24),
-                      _SectionTitle(title: 'Story', theme: theme),
-                      const SizedBox(height: 8),
-                      Text(
-                        movie.description,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: const Color(0xFF5C4630),
-                          height: 1.55,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _ChipSection(
-                        title: 'Cast',
-                        values: movie.casts,
-                        theme: theme,
-                      ),
-                      const SizedBox(height: 24),
-                      _ChipSection(
-                        title: 'Available formats',
-                        values: movie.formats,
-                        theme: theme,
-                      ),
-                      const SizedBox(height: 24),
-                      _ChipSection(
-                        title: 'Show dates',
-                        values: movie.showDates,
-                        theme: theme,
-                      ),
-                      const SizedBox(height: 24),
-                      _SectionTitle(title: 'Select showtime', theme: theme),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
+            ),
+            child: SafeArea(
+              child: CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    sliver: SliverToBoxAdapter(
+                      child: _DetailsHero(movie: movie, theme: theme),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          for (final time in movie.showTimes)
-                            ActionChip(
-                              label: Text(time),
-                              avatar: const Icon(Icons.schedule_rounded),
-                              onPressed: () {},
+                          if (snapshot.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: _InlineInfoCard(
+                                text:
+                                    'Showing cached details. ${snapshot.error}',
+                              ),
                             ),
+                          Text(
+                            movie.name,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              color: const Color(0xFF2A2118),
+                              fontWeight: FontWeight.w900,
+                              height: 1.05,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${movie.language} - ${movie.releaseDateLabel}',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: const Color(0xFF5C4630),
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          _InfoGrid(movie: movie),
+                          const SizedBox(height: 24),
+                          _SectionTitle(title: 'Story', theme: theme),
+                          const SizedBox(height: 8),
+                          Text(
+                            movie.description.isEmpty
+                                ? 'Description will appear here when the backend provides it.'
+                                : movie.description,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: const Color(0xFF5C4630),
+                              height: 1.55,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _ChipSection(
+                            title: 'Cast',
+                            values: movie.casts.isEmpty
+                                ? const ['Cast data unavailable']
+                                : movie.casts,
+                            theme: theme,
+                          ),
+                          const SizedBox(height: 24),
+                          _ChipSection(
+                            title: 'Movie details',
+                            values: [
+                              movie.releaseStatusLabel,
+                              movie.language,
+                              movie.trailerUrl.trim().isEmpty
+                                  ? 'Trailer unavailable'
+                                  : 'Trailer available',
+                            ],
+                            theme: theme,
+                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-        child: ElevatedButton.icon(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => TheatreListScreen(movie: movie),
-              ),
-            );
-          },
-          icon: const Icon(Icons.event_seat_rounded),
-          label: const Text('Book seats'),
-        ),
-      ),
+          bottomNavigationBar: SafeArea(
+            minimum: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => TheatreListScreen(movie: movie),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.event_seat_rounded),
+              label: const Text('Book seats'),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -159,7 +180,7 @@ class _DetailsHero extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
               const Spacer(),
-              _HeroBadge(label: movie.releaseStatus),
+              _HeroBadge(label: movie.releaseStatusLabel),
             ],
           ),
           const Spacer(),
@@ -170,25 +191,19 @@ class _DetailsHero extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            movie.badge,
+            movie.language,
             style: theme.textTheme.labelLarge?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.star_rounded, color: Colors.white),
-              const SizedBox(width: 6),
-              Text(
-                movie.rating,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
+          Text(
+            movie.releaseDateLabel,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ],
       ),
@@ -208,8 +223,11 @@ class _InfoGrid extends StatelessWidget {
       runSpacing: 10,
       children: [
         _InfoPill(label: 'Director', value: movie.director),
-        _InfoPill(label: 'Release', value: movie.releaseDate),
-        _InfoPill(label: 'Trailer', value: 'Available'),
+        _InfoPill(label: 'Release', value: movie.releaseDateLabel),
+        _InfoPill(
+          label: 'Trailer',
+          value: movie.trailerUrl.trim().isEmpty ? 'Unavailable' : 'Available',
+        ),
       ],
     );
   }
@@ -331,6 +349,19 @@ class _HeroBadge extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       ),
+    );
+  }
+}
+
+class _InlineInfoCard extends StatelessWidget {
+  const _InlineInfoCard({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(padding: const EdgeInsets.all(14), child: Text(text)),
     );
   }
 }

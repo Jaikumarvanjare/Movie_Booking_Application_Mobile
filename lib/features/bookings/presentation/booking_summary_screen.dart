@@ -41,7 +41,7 @@ class BookingSummaryScreen extends StatelessWidget {
                         rows: [
                           _SummaryRow('Name', bookingDraft.movie.name),
                           _SummaryRow('Language', bookingDraft.movie.language),
-                          _SummaryRow('Format', bookingDraft.show.format),
+                          _SummaryRow('Format', bookingDraft.show.formatLabel),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -50,7 +50,11 @@ class BookingSummaryScreen extends StatelessWidget {
                         rows: [
                           _SummaryRow('Name', bookingDraft.theatre.name),
                           _SummaryRow('City', bookingDraft.theatre.city),
-                          _SummaryRow('Address', bookingDraft.theatre.address),
+                          _SummaryRow(
+                            'Address',
+                            bookingDraft.theatre.address ??
+                                'Address unavailable',
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),

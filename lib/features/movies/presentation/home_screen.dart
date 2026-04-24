@@ -1,10 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../data/movie.dart';
+import '../data/movie_repository.dart';
 import 'movie_details_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  Future<List<Movie>>? _moviesFuture;
+  bool _isInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isInitialized) {
+      return;
+    }
+    _isInitialized = true;
+    _moviesFuture = context.read<MovieRepository>().fetchMovies();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _loadMovies([String? query]) {
+    setState(() {
+      _moviesFuture = context.read<MovieRepository>().fetchMovies(query: query);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,65 +54,128 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
-                sliver: SliverToBoxAdapter(
-                  child: _HomeHeader(theme: theme, colorScheme: colorScheme),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 22)),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                sliver: SliverToBoxAdapter(
-                  child: _SearchField(colorScheme: colorScheme),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                sliver: SliverToBoxAdapter(
-                  child: _FeaturedMovieCard(
-                    movie: sampleNowShowingMovies.first,
-                    theme: theme,
-                    colorScheme: colorScheme,
-                    onPressed: () => _openMovieDetails(
-                      context,
-                      sampleNowShowingMovies.first,
+          child: FutureBuilder<List<Movie>>(
+            future: _moviesFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return _HomeMessageState(
+                  icon: Icons.cloud_off_rounded,
+                  title: 'Could not load movies',
+                  message: '${snapshot.error}',
+                  actionLabel: 'Retry',
+                  onPressed: () => _loadMovies(_searchController.text),
+                );
+              }
+
+              final movies = snapshot.data ?? const <Movie>[];
+              final nowShowing = movies
+                  .where((movie) => movie.isNowShowing)
+                  .toList(growable: false);
+              final featuredMovie = nowShowing.isNotEmpty
+                  ? nowShowing.first
+                  : movies.isNotEmpty
+                  ? movies.first
+                  : null;
+              final comingSoon = movies
+                  .where((movie) => !movie.isNowShowing)
+                  .toList(growable: false);
+
+              if (movies.isEmpty) {
+                return _HomeMessageState(
+                  icon: Icons.movie_filter_outlined,
+                  title: 'No movies found',
+                  message: _searchController.text.trim().isEmpty
+                      ? 'Once the backend starts returning movie data, your catalogue will appear here.'
+                      : 'Try a different movie name or clear the search.',
+                  actionLabel: _searchController.text.trim().isEmpty
+                      ? 'Retry'
+                      : 'Clear search',
+                  onPressed: () {
+                    if (_searchController.text.trim().isNotEmpty) {
+                      _searchController.clear();
+                    }
+                    _loadMovies();
+                  },
+                );
+              }
+
+              return CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
+                    sliver: SliverToBoxAdapter(
+                      child: _HomeHeader(
+                        theme: theme,
+                        colorScheme: colorScheme,
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 28)),
-              SliverToBoxAdapter(
-                child: _HorizontalMovieSection(
-                  title: 'Now showing',
-                  movies: sampleNowShowingMovies,
-                  theme: theme,
-                  onMoviePressed: (movie) => _openMovieDetails(context, movie),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 28)),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                sliver: SliverToBoxAdapter(
-                  child: _ComingSoonSection(
-                    movies: sampleComingSoonMovies,
-                    theme: theme,
-                    colorScheme: colorScheme,
-                    onMoviePressed: (movie) =>
-                        _openMovieDetails(context, movie),
+                  const SliverToBoxAdapter(child: SizedBox(height: 22)),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    sliver: SliverToBoxAdapter(
+                      child: _SearchField(
+                        controller: _searchController,
+                        colorScheme: colorScheme,
+                        onSearch: _loadMovies,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                  if (featuredMovie != null) ...[
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      sliver: SliverToBoxAdapter(
+                        child: _FeaturedMovieCard(
+                          movie: featuredMovie,
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          onPressed: () =>
+                              _openMovieDetails(context, featuredMovie),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (nowShowing.isNotEmpty) ...[
+                    const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                    SliverToBoxAdapter(
+                      child: _HorizontalMovieSection(
+                        title: 'Now showing',
+                        movies: nowShowing,
+                        theme: theme,
+                        onMoviePressed: (movie) =>
+                            _openMovieDetails(context, movie),
+                      ),
+                    ),
+                  ],
+                  if (comingSoon.isNotEmpty) ...[
+                    const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                      sliver: SliverToBoxAdapter(
+                        child: _ComingSoonSection(
+                          movies: comingSoon,
+                          theme: theme,
+                          colorScheme: colorScheme,
+                          onMoviePressed: (movie) =>
+                              _openMovieDetails(context, movie),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
         ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: 0,
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.local_movies_outlined),
             selectedIcon: Icon(Icons.local_movies_rounded),
@@ -160,18 +256,34 @@ class _HomeHeader extends StatelessWidget {
 }
 
 class _SearchField extends StatelessWidget {
-  const _SearchField({required this.colorScheme});
+  const _SearchField({
+    required this.controller,
+    required this.colorScheme,
+    required this.onSearch,
+  });
 
+  final TextEditingController controller;
   final ColorScheme colorScheme;
+  final ValueChanged<String?> onSearch;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      controller: controller,
       textInputAction: TextInputAction.search,
+      onSubmitted: onSearch,
+      onChanged: (value) {
+        if (value.trim().isEmpty) {
+          onSearch(null);
+        }
+      },
       decoration: InputDecoration(
-        hintText: 'Search movies, theatres, shows',
+        hintText: 'Search movies by name',
         prefixIcon: const Icon(Icons.search_rounded),
-        suffixIcon: Icon(Icons.tune_rounded, color: colorScheme.primary),
+        suffixIcon: IconButton(
+          onPressed: () => onSearch(controller.text),
+          icon: Icon(Icons.travel_explore_rounded, color: colorScheme.primary),
+        ),
       ),
     );
   }
@@ -216,12 +328,15 @@ class _FeaturedMovieCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                _MovieBadge(label: 'Featured tonight'),
+                _MovieBadge(label: movie.releaseStatusLabel),
                 const Spacer(),
-                Icon(Icons.star_rounded, color: colorScheme.primaryContainer),
+                Icon(
+                  Icons.language_rounded,
+                  color: colorScheme.primaryContainer,
+                ),
                 const SizedBox(width: 4),
                 Text(
-                  movie.rating,
+                  movie.language,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -240,7 +355,7 @@ class _FeaturedMovieCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '${movie.genre} - ${movie.runtime}',
+              movie.releaseDateLabel,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: Colors.white.withValues(alpha: 0.82),
               ),
@@ -336,7 +451,7 @@ class _MoviePosterCard extends StatelessWidget {
               children: [
                 Align(
                   alignment: Alignment.topRight,
-                  child: _MovieBadge(label: movie.badge),
+                  child: _MovieBadge(label: movie.releaseStatusLabel),
                 ),
                 const Spacer(),
                 Icon(
@@ -357,7 +472,7 @@ class _MoviePosterCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  movie.genre,
+                  movie.language,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -415,9 +530,9 @@ class _ComingSoonSection extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                subtitle: Text('${movie.genre} - ${movie.runtime}'),
+                subtitle: Text(movie.releaseDateLabel),
                 trailing: Text(
-                  movie.badge,
+                  movie.releaseStatusLabel,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w700,
@@ -481,6 +596,55 @@ class _MovieBadge extends StatelessWidget {
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: Colors.white,
           fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeMessageState extends StatelessWidget {
+  const _HomeMessageState({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 64),
+            const SizedBox(height: 18),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
+            ),
+            const SizedBox(height: 18),
+            FilledButton(onPressed: onPressed, child: Text(actionLabel)),
+          ],
         ),
       ),
     );

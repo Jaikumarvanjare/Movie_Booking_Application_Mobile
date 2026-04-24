@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../../movies/presentation/home_screen.dart';
+import '../../../app/app_home.dart';
+import '../data/auth_repository.dart';
+import 'session_controller.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -10,9 +13,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  static const _demoEmail = 'guest@cinebook.app';
-  static const _demoPassword = 'secret1';
-
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -26,30 +26,42 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final email = _emailController.text.trim().toLowerCase();
-    final password = _passwordController.text;
-
-    if (email != _demoEmail || password != _demoPassword) {
+    final sessionController = context.read<SessionController>();
+    try {
+      final session = await sessionController.signIn(
+        email: _emailController.text.trim().toLowerCase(),
+        password: _passwordController.text,
+      );
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(builder: (_) => buildHomeForUser(session.user)),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Use the demo login until backend auth is connected.'),
+        SnackBar(
+          content: Text(
+            sessionController.lastErrorMessage ??
+                'Unable to sign in. Please try again.',
+          ),
         ),
       );
-      return;
     }
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final sessionController = context.watch<SessionController>();
+
     return _AuthScaffold(
       title: 'Welcome back',
       subtitle: 'Sign in to book seats, track tickets, and manage shows.',
@@ -111,13 +123,10 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            ElevatedButton(onPressed: _submit, child: const Text('Log in')),
-            const SizedBox(height: 12),
-            Text(
-              'Demo login: $_demoEmail / $_demoPassword',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ElevatedButton(
+              onPressed: sessionController.isSubmitting ? null : _submit,
+              child: Text(
+                sessionController.isSubmitting ? 'Signing in...' : 'Log in',
               ),
             ),
             const SizedBox(height: 18),
@@ -153,6 +162,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -163,14 +173,42 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Signup is ready for API integration.')),
-    );
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final message = await context.read<AuthRepository>().signUp(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim().toLowerCase(),
+        password: _passwordController.text,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override
@@ -271,8 +309,10 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _submit,
-              child: const Text('Create account'),
+              onPressed: _isSubmitting ? null : _submit,
+              child: Text(
+                _isSubmitting ? 'Creating account...' : 'Create account',
+              ),
             ),
             const SizedBox(height: 18),
             _AuthTextAction(
@@ -297,30 +337,62 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
     _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Reset link flow is ready for API integration.'),
-      ),
-    );
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final message = await context.read<AuthRepository>().resetPassword(
+        email: _emailController.text.trim().toLowerCase(),
+        password: _passwordController.text,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return _AuthScaffold(
       title: 'Reset password',
-      subtitle: 'Enter your email and we will prepare a reset link flow.',
+      subtitle: 'Enter your email and a new password to update your account.',
       showBackButton: true,
       child: Form(
         key: _formKey,
@@ -337,12 +409,69 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 prefixIcon: Icon(Icons.mail_outline_rounded),
               ),
               validator: _validateEmail,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(
+                labelText: 'New password',
+                prefixIcon: const Icon(Icons.lock_reset_rounded),
+                suffixIcon: IconButton(
+                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
+              validator: _validatePassword,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _confirmPasswordController,
+              obscureText: _obscureConfirmPassword,
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(
+                labelText: 'Confirm new password',
+                prefixIcon: const Icon(Icons.verified_user_outlined),
+                suffixIcon: IconButton(
+                  tooltip: _obscureConfirmPassword
+                      ? 'Show password'
+                      : 'Hide password',
+                  onPressed: () {
+                    setState(() {
+                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                    });
+                  },
+                  icon: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
+              validator: (value) {
+                if (value != _passwordController.text) {
+                  return 'Passwords do not match';
+                }
+                return _validatePassword(value);
+              },
               onFieldSubmitted: (_) => _submit(),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _submit,
-              child: const Text('Send reset link'),
+              onPressed: _isSubmitting ? null : _submit,
+              child: Text(
+                _isSubmitting ? 'Updating password...' : 'Update password',
+              ),
             ),
           ],
         ),
