@@ -1,18 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../movies/data/movie.dart';
 import '../../shows/presentation/show_list_screen.dart';
 import '../data/theatre.dart';
+import '../data/theatre_repository.dart';
 
-class TheatreListScreen extends StatelessWidget {
+class TheatreListScreen extends StatefulWidget {
   const TheatreListScreen({required this.movie, super.key});
 
   final Movie movie;
 
   @override
+  State<TheatreListScreen> createState() => _TheatreListScreenState();
+}
+
+class _TheatreListScreenState extends State<TheatreListScreen> {
+  late Future<List<Theatre>> _theatresFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _theatresFuture = context.read<TheatreRepository>().fetchTheatres(
+      movieId: widget.movie.id,
+    );
+  }
+
+  void _reload() {
+    setState(() {
+      _theatresFuture = context.read<TheatreRepository>().fetchTheatres(
+        movieId: widget.movie.id,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final theatres = sampleTheatresForMovie(movie.id);
 
     return Scaffold(
       body: Container(
@@ -24,47 +48,83 @@ class TheatreListScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                sliver: SliverToBoxAdapter(
-                  child: _TheatreHeader(movie: movie, theme: theme),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 18)),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                sliver: SliverToBoxAdapter(child: _FilterRow(movie: movie)),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 18)),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                sliver: SliverList.separated(
-                  itemBuilder: (context, index) {
-                    final theatre = theatres[index];
-                    return _TheatreCard(
-                      theatre: theatre,
-                      theme: theme,
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) =>
-                                ShowListScreen(movie: movie, theatre: theatre),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 14),
-                  itemCount: theatres.length,
-                ),
-              ),
-            ],
+          child: FutureBuilder<List<Theatre>>(
+            future: _theatresFuture,
+            builder: (context, snapshot) {
+              return CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+                    sliver: SliverToBoxAdapter(
+                      child: _TheatreHeader(movie: widget.movie, theme: theme),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 18)),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                    sliver: SliverToBoxAdapter(
+                      child: _buildBody(snapshot, theme),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBody(AsyncSnapshot<List<Theatre>> snapshot, ThemeData theme) {
+    if (snapshot.connectionState != ConnectionState.done) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (snapshot.hasError) {
+      return _InfoCard(
+        icon: Icons.cloud_off_rounded,
+        title: 'Could not load theatres',
+        message: '${snapshot.error}',
+        actionLabel: 'Retry',
+        onPressed: _reload,
+      );
+    }
+
+    final theatres = snapshot.data ?? const <Theatre>[];
+    if (theatres.isEmpty) {
+      return _InfoCard(
+        icon: Icons.theaters_outlined,
+        title: 'No theatres found',
+        message:
+            'The backend did not return theatres for ${widget.movie.name}.',
+        actionLabel: 'Retry',
+        onPressed: _reload,
+      );
+    }
+
+    return Column(
+      children: [
+        for (final theatre in theatres) ...[
+          _TheatreCard(
+            theatre: theatre,
+            theme: theme,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) =>
+                      ShowListScreen(movie: widget.movie, theatre: theatre),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+        ],
+      ],
     );
   }
 }
@@ -100,34 +160,6 @@ class _TheatreHeader extends StatelessWidget {
             color: const Color(0xFF5C4630),
             height: 1.4,
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FilterRow extends StatelessWidget {
-  const _FilterRow({required this.movie});
-
-  final Movie movie;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        Chip(
-          avatar: const Icon(Icons.location_city_rounded, size: 18),
-          label: const Text('Pune'),
-        ),
-        Chip(
-          avatar: const Icon(Icons.local_movies_rounded, size: 18),
-          label: Text(movie.badge),
-        ),
-        const Chip(
-          avatar: Icon(Icons.near_me_rounded, size: 18),
-          label: Text('Nearby first'),
         ),
       ],
     );
@@ -187,7 +219,7 @@ class _TheatreCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${theatre.city} - ${theatre.distance}',
+                          theatre.city,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.primary,
                             fontWeight: FontWeight.w700,
@@ -199,32 +231,82 @@ class _TheatreCard extends StatelessWidget {
                   const Icon(Icons.chevron_right_rounded),
                 ],
               ),
-              const SizedBox(height: 14),
-              Text(
-                theatre.description,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF5C4630),
-                  height: 1.45,
+              if ((theatre.description ?? '').trim().isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  theatre.description!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF5C4630),
+                    height: 1.45,
+                  ),
                 ),
-              ),
+              ],
               const SizedBox(height: 12),
               Text(
-                '${theatre.address} - ${theatre.pincode}',
+                _theatreAddress(theatre),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final format in theatre.formats)
-                    Chip(label: Text(format)),
-                ],
-              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+String _theatreAddress(Theatre theatre) {
+  final address = (theatre.address ?? '').trim();
+  if (address.isEmpty) {
+    return 'Pincode ${theatre.pincode}';
+  }
+  return '$address - ${theatre.pincode}';
+}
+
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
+            ),
+            const SizedBox(height: 14),
+            FilledButton(onPressed: onPressed, child: Text(actionLabel)),
+          ],
         ),
       ),
     );

@@ -1,20 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../movies/data/movie.dart';
 import '../../seats/presentation/seat_selection_screen.dart';
 import '../../theatres/data/theatre.dart';
 import '../data/movie_show.dart';
+import '../data/show_repository.dart';
 
-class ShowListScreen extends StatelessWidget {
+class ShowListScreen extends StatefulWidget {
   const ShowListScreen({required this.movie, required this.theatre, super.key});
 
   final Movie movie;
   final Theatre theatre;
 
   @override
+  State<ShowListScreen> createState() => _ShowListScreenState();
+}
+
+class _ShowListScreenState extends State<ShowListScreen> {
+  late Future<List<MovieShow>> _showsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _showsFuture = context.read<ShowRepository>().fetchShows(
+      theatreId: widget.theatre.id,
+      movieId: widget.movie.id,
+    );
+  }
+
+  void _reload() {
+    setState(() {
+      _showsFuture = context.read<ShowRepository>().fetchShows(
+        theatreId: widget.theatre.id,
+        movieId: widget.movie.id,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final shows = sampleShowsFor(theatreId: theatre.id, movieId: movie.id);
 
     return Scaffold(
       body: Container(
@@ -26,41 +52,80 @@ class ShowListScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                sliver: SliverToBoxAdapter(
-                  child: _ShowHeader(
-                    movie: movie,
-                    theatre: theatre,
-                    theme: theme,
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 22)),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                sliver: shows.isEmpty
-                    ? const SliverToBoxAdapter(child: _EmptyShowsCard())
-                    : SliverList.separated(
-                        itemBuilder: (context, index) {
-                          return _ShowCard(
-                            movie: movie,
-                            theatre: theatre,
-                            show: shows[index],
-                            theme: theme,
-                          );
-                        },
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 14),
-                        itemCount: shows.length,
+          child: FutureBuilder<List<MovieShow>>(
+            future: _showsFuture,
+            builder: (context, snapshot) {
+              return CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+                    sliver: SliverToBoxAdapter(
+                      child: _ShowHeader(
+                        movie: widget.movie,
+                        theatre: widget.theatre,
+                        theme: theme,
                       ),
-              ),
-            ],
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 22)),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                    sliver: SliverToBoxAdapter(
+                      child: _buildBody(snapshot, theme),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBody(AsyncSnapshot<List<MovieShow>> snapshot, ThemeData theme) {
+    if (snapshot.connectionState != ConnectionState.done) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (snapshot.hasError) {
+      return _InfoCard(
+        icon: Icons.cloud_off_rounded,
+        title: 'Could not load shows',
+        message: '${snapshot.error}',
+        actionLabel: 'Retry',
+        onPressed: _reload,
+      );
+    }
+
+    final shows = snapshot.data ?? const <MovieShow>[];
+    if (shows.isEmpty) {
+      return _InfoCard(
+        icon: Icons.schedule_rounded,
+        title: 'No shows found',
+        message: 'The backend has not returned shows for this theatre yet.',
+        actionLabel: 'Retry',
+        onPressed: _reload,
+      );
+    }
+
+    return Column(
+      children: [
+        for (final show in shows) ...[
+          _ShowCard(
+            movie: widget.movie,
+            theatre: widget.theatre,
+            show: show,
+            theme: theme,
+          ),
+          const SizedBox(height: 14),
+        ],
+      ],
     );
   }
 }
@@ -174,7 +239,7 @@ class _ShowCard extends StatelessWidget {
                 ),
                 Chip(
                   avatar: const Icon(Icons.high_quality_rounded, size: 18),
-                  label: Text(show.format),
+                  label: Text(show.formatLabel),
                 ),
               ],
             ),
@@ -204,17 +269,49 @@ class _ShowCard extends StatelessWidget {
   }
 }
 
-class _EmptyShowsCard extends StatelessWidget {
-  const _EmptyShowsCard();
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Text(
-          'No shows found for this theatre yet.',
-          style: Theme.of(context).textTheme.bodyLarge,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
+            ),
+            const SizedBox(height: 14),
+            FilledButton(onPressed: onPressed, child: Text(actionLabel)),
+          ],
         ),
       ),
     );

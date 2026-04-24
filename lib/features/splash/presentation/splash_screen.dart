@@ -1,14 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../../app/app_home.dart';
+import '../../auth/presentation/session_controller.dart';
 import '../../auth/presentation/login_screen.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  SessionController? _sessionController;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final controller = context.read<SessionController>();
+    if (_sessionController == controller) {
+      return;
+    }
+    _sessionController?.removeListener(_handleSessionChanged);
+    _sessionController = controller;
+    _sessionController?.addListener(_handleSessionChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleSessionChanged();
+    });
+  }
+
+  @override
+  void dispose() {
+    _sessionController?.removeListener(_handleSessionChanged);
+    super.dispose();
+  }
+
+  void _handleSessionChanged() {
+    final controller = _sessionController;
+    if (!mounted || controller == null) {
+      return;
+    }
+
+    if (controller.status == SessionStatus.authenticated &&
+        controller.user != null) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => buildHomeForUser(controller.user!),
+        ),
+        (route) => false,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final sessionController = context.watch<SessionController>();
 
     return Scaffold(
       body: Container(
@@ -58,7 +107,7 @@ class SplashScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'This starter shell gives us a clean base for auth, role-based navigation, and API integration in the next step.',
+                  'Sign in to browse the live catalogue, choose theatres and shows, and continue into booking and payment.',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     height: 1.5,
                     color: const Color(0xFF5C4630),
@@ -90,16 +139,24 @@ class SplashScreen extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
+                if (sessionController.status == SessionStatus.checking)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: LinearProgressIndicator(),
+                  ),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const LoginScreen(),
-                        ),
-                      );
-                    },
+                    onPressed:
+                        sessionController.status == SessionStatus.checking
+                        ? null
+                        : () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const LoginScreen(),
+                              ),
+                            );
+                          },
                     child: const Text('Continue to login'),
                   ),
                 ),
@@ -133,10 +190,7 @@ class _StepTile extends StatelessWidget {
             color: colorScheme.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            Icons.play_arrow_rounded,
-            color: colorScheme.primary,
-          ),
+          child: Icon(Icons.play_arrow_rounded, color: colorScheme.primary),
         ),
         const SizedBox(width: 14),
         Expanded(

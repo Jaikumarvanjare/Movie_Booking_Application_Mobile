@@ -92,6 +92,20 @@ class PaymentResultScreen extends StatelessWidget {
                             value: paymentResult.razorpayPaymentId!,
                           ),
                         ],
+                        if (paymentResult.razorpayOrderId != null) ...[
+                          const Divider(height: 20),
+                          _ResultRow(
+                            label: 'Order ID',
+                            value: paymentResult.razorpayOrderId!,
+                          ),
+                        ],
+                        if (paymentResult.booking != null) ...[
+                          const Divider(height: 20),
+                          _ResultRow(
+                            label: 'Booking ID',
+                            value: paymentResult.booking!.id,
+                          ),
+                        ],
                       ],
                     ),
                   ),
