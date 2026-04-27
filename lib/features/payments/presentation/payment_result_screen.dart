@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../movies/presentation/home_screen.dart';
+import '../../../app/app_home.dart';
 import '../data/payment_result.dart';
 
 class PaymentResultScreen extends StatelessWidget {
@@ -115,7 +115,7 @@ class PaymentResultScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute<void>(
-                        builder: (_) => const HomeScreen(),
+                        builder: (_) => const CustomerShell(),
                       ),
                       (route) => false,
                     );

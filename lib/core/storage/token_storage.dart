@@ -8,6 +8,7 @@ class StoredSession {
     required this.role,
     required this.status,
     this.userId,
+    this.createdAt,
   });
 
   final String token;
@@ -16,6 +17,7 @@ class StoredSession {
   final String name;
   final String role;
   final String status;
+  final DateTime? createdAt;
 }
 
 class TokenStorage {
@@ -34,6 +36,7 @@ class TokenStorage {
   static const _nameKey = 'auth_name';
   static const _roleKey = 'auth_role';
   static const _statusKey = 'auth_status';
+  static const _createdAtKey = 'auth_created_at';
 
   Future<void> saveSession(StoredSession session) async {
     await _secureStorage.write(key: _tokenKey, value: session.token);
@@ -42,6 +45,10 @@ class TokenStorage {
     await _secureStorage.write(key: _nameKey, value: session.name);
     await _secureStorage.write(key: _roleKey, value: session.role);
     await _secureStorage.write(key: _statusKey, value: session.status);
+    await _secureStorage.write(
+      key: _createdAtKey,
+      value: session.createdAt?.toIso8601String(),
+    );
   }
 
   Future<StoredSession?> readSession() async {
@@ -50,6 +57,7 @@ class TokenStorage {
     final name = await _secureStorage.read(key: _nameKey);
     final role = await _secureStorage.read(key: _roleKey);
     final status = await _secureStorage.read(key: _statusKey);
+    final createdAt = await _secureStorage.read(key: _createdAtKey);
 
     if (token == null ||
         email == null ||
@@ -66,6 +74,7 @@ class TokenStorage {
       name: name,
       role: role,
       status: status,
+      createdAt: DateTime.tryParse(createdAt ?? ''),
     );
   }
 
@@ -80,5 +89,6 @@ class TokenStorage {
     await _secureStorage.delete(key: _nameKey);
     await _secureStorage.delete(key: _roleKey);
     await _secureStorage.delete(key: _statusKey);
+    await _secureStorage.delete(key: _createdAtKey);
   }
 }
