@@ -7,6 +7,7 @@ class AppUser {
     required this.role,
     required this.status,
     this.id,
+    this.createdAt,
   });
 
   final String? id;
@@ -14,6 +15,25 @@ class AppUser {
   final String name;
   final AppUserRole role;
   final String status;
+  final DateTime? createdAt;
+
+  AppUser copyWith({
+    String? id,
+    String? email,
+    String? name,
+    AppUserRole? role,
+    String? status,
+    DateTime? createdAt,
+  }) {
+    return AppUser(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
 
 class AuthSession {
@@ -21,6 +41,10 @@ class AuthSession {
 
   final String token;
   final AppUser user;
+
+  AuthSession copyWith({String? token, AppUser? user}) {
+    return AuthSession(token: token ?? this.token, user: user ?? this.user);
+  }
 }
 
 AppUserRole appUserRoleFromString(String value) {

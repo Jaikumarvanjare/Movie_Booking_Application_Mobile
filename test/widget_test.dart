@@ -22,11 +22,24 @@ import 'package:movie_booking_application_mobile/features/theatres/data/theatre_
 
 const _customerEmail = 'rahul@demo.com';
 const _customerPassword = '1234567';
+const _updatedCustomerName = 'Rahul Profile';
+final _memberSince = DateTime(2026, 4, 24, 10);
 
 class FakeAuthRepository implements AuthRepository {
   FakeAuthRepository();
 
   AuthSession? _session;
+  String _savedPassword = _customerPassword;
+  String _savedName = 'Rahul Demo';
+
+  AppUser get _currentUser => AppUser(
+    id: 'customer_123',
+    email: _customerEmail,
+    name: _savedName,
+    role: AppUserRole.customer,
+    status: 'APPROVED',
+    createdAt: _memberSince,
+  );
 
   @override
   Future<AuthSession?> restoreSession() async {
@@ -38,20 +51,34 @@ class FakeAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    if (email == _customerEmail && password == _customerPassword) {
-      _session = AuthSession(
-        token: 'test-token',
-        user: const AppUser(
-          email: _customerEmail,
-          name: 'Rahul Demo',
-          role: AppUserRole.customer,
-          status: 'APPROVED',
-        ),
-      );
+    if (email == _customerEmail && password == _savedPassword) {
+      _session = AuthSession(token: 'test-token', user: _currentUser);
       return _session!;
     }
 
     throw const ApiException(message: 'Invalid email or password.');
+  }
+
+  @override
+  Future<AppUser> fetchProfile() async {
+    _ensureSession();
+    final user = _currentUser;
+    _session = _session!.copyWith(user: user);
+    return user;
+  }
+
+  @override
+  Future<AppUser> updateProfile({required String name}) async {
+    _ensureSession();
+    final trimmedName = name.trim();
+    if (trimmedName.length < 2) {
+      throw const ApiException(message: 'Name must be at least 2 characters.');
+    }
+
+    _savedName = trimmedName;
+    final user = _currentUser;
+    _session = _session!.copyWith(user: user);
+    return user;
   }
 
   @override
@@ -68,12 +95,38 @@ class FakeAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
+    _savedPassword = password;
     return 'Password updated successfully. Please sign in.';
+  }
+
+  @override
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _ensureSession();
+    if (currentPassword != _savedPassword) {
+      throw const ApiException(message: 'Current password is incorrect.');
+    }
+    if (newPassword.length < 6) {
+      throw const ApiException(
+        message: 'Password must be at least 6 characters.',
+      );
+    }
+
+    _savedPassword = newPassword;
+    return 'Password changed successfully';
   }
 
   @override
   Future<void> signOut() async {
     _session = null;
+  }
+
+  void _ensureSession() {
+    if (_session == null) {
+      throw const ApiException(message: 'You need to sign in again.');
+    }
   }
 }
 
@@ -239,6 +292,30 @@ Widget buildTestApp() {
       showRepository: FakeShowRepository(),
     ),
   );
+}
+
+Future<void> _openLoginScreen(WidgetTester tester) async {
+  await tester.tap(find.text('Continue to login'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _signInAsCustomer(WidgetTester tester) async {
+  await _openLoginScreen(tester);
+  await tester.enterText(
+    find.byKey(const ValueKey('loginEmailField')),
+    _customerEmail,
+  );
+  await tester.enterText(
+    find.byKey(const ValueKey('loginPasswordField')),
+    _customerPassword,
+  );
+  await tester.tap(find.text('Log in'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _openProfileTab(WidgetTester tester) async {
+  await tester.tap(find.text('Profile'));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -431,5 +508,117 @@ void main() {
     expect(find.text('Now showing'), findsOneWidget);
     expect(find.text('Email address'), findsNothing);
     expect(find.text('Password'), findsNothing);
+  });
+
+  testWidgets('Profile tab renders customer details and member since', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+
+    await _signInAsCustomer(tester);
+    expect(find.text('Profile'), findsOneWidget);
+
+    await _openProfileTab(tester);
+
+    expect(find.text('Rahul Demo'), findsWidgets);
+    expect(find.text(_customerEmail), findsWidgets);
+    expect(find.text('Customer'), findsWidgets);
+    expect(find.text('Approved'), findsWidgets);
+    expect(find.text('Member since'), findsOneWidget);
+    expect(find.text('Apr 24, 2026'), findsOneWidget);
+  });
+
+  testWidgets('Edit profile updates the displayed name', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+
+    await _signInAsCustomer(tester);
+    await _openProfileTab(tester);
+
+    await tester.tap(find.text('Edit profile'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('editProfileNameField')),
+      _updatedCustomerName,
+    );
+    await tester.tap(find.text('Save changes'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Profile updated successfully'), findsOneWidget);
+    expect(find.text(_updatedCustomerName), findsWidgets);
+  });
+
+  testWidgets('Change password validates inputs and succeeds', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+
+    await _signInAsCustomer(tester);
+    await _openProfileTab(tester);
+
+    await tester.tap(find.text('Change password'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('changeCurrentPasswordField')),
+      _customerPassword,
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('changeNewPasswordField')),
+      '123',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('changeConfirmPasswordField')),
+      '123',
+    );
+    await tester.tap(find.text('Update password'));
+    await tester.pump();
+
+    expect(find.text('Password must be at least 6 characters'), findsWidgets);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('changeNewPasswordField')),
+      'newpass1',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('changeConfirmPasswordField')),
+      'different1',
+    );
+    await tester.tap(find.text('Update password'));
+    await tester.pump();
+
+    expect(find.text('Passwords do not match'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('changeConfirmPasswordField')),
+      'newpass1',
+    );
+    await tester.tap(find.text('Update password'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Password changed successfully'), findsOneWidget);
+    expect(find.text('Change password'), findsOneWidget);
+    expect(find.text('Log out'), findsOneWidget);
+  });
+
+  testWidgets('Logout returns the user to the login screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(buildTestApp());
+
+    await _signInAsCustomer(tester);
+    await _openProfileTab(tester);
+
+    await tester.tap(find.text('Log out'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Log out'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.text('Email address'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
+    expect(find.text('Find your next show'), findsNothing);
   });
 }

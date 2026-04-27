@@ -173,26 +173,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        destinations: [
-          NavigationDestination(
-            icon: Icon(Icons.local_movies_outlined),
-            selectedIcon: Icon(Icons.local_movies_rounded),
-            label: 'Movies',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.confirmation_number_outlined),
-            selectedIcon: Icon(Icons.confirmation_number_rounded),
-            label: 'Tickets',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
-          ),
-        ],
-      ),
     );
   }
 

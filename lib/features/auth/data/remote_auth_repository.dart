@@ -28,6 +28,7 @@ class RemoteAuthRepository implements AuthRepository {
         name: storedSession.name,
         role: appUserRoleFromString(storedSession.role),
         status: storedSession.status,
+        createdAt: storedSession.createdAt,
       ),
     );
   }
@@ -49,9 +50,24 @@ class RemoteAuthRepository implements AuthRepository {
         name: session.user.name,
         role: session.user.role.name.toUpperCase(),
         status: session.user.status,
+        createdAt: session.user.createdAt,
       ),
     );
     return session;
+  }
+
+  @override
+  Future<AppUser> fetchProfile() async {
+    final user = await _authApiService.fetchProfile();
+    await _persistUpdatedUser(user);
+    return user;
+  }
+
+  @override
+  Future<AppUser> updateProfile({required String name}) async {
+    final user = await _authApiService.updateProfile(name: name);
+    await _persistUpdatedUser(user);
+    return user;
   }
 
   @override
@@ -72,7 +88,41 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> signOut() {
-    return _tokenStorage.clearSession();
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) {
+    return _authApiService.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+  }
+
+  @override
+  Future<void> signOut() async {
+    try {
+      await _authApiService.logout();
+    } finally {
+      await _tokenStorage.clearSession();
+    }
+  }
+
+  Future<void> _persistUpdatedUser(AppUser user) async {
+    final storedSession = await _tokenStorage.readSession();
+    if (storedSession == null) {
+      return;
+    }
+
+    await _tokenStorage.saveSession(
+      StoredSession(
+        token: storedSession.token,
+        userId: user.id ?? storedSession.userId,
+        email: user.email,
+        name: user.name,
+        role: user.role.name.toUpperCase(),
+        status: user.status,
+        createdAt: user.createdAt ?? storedSession.createdAt,
+      ),
+    );
   }
 }
