@@ -98,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  'Book the next show without the desktop detour.',
+                  'Movie tickets, made simple.',
                   style: theme.textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     height: 1.05,
@@ -107,36 +107,30 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Sign in to browse the live catalogue, choose theatres and shows, and continue into booking and payment.',
+                  'Browse movies, choose seats, and complete secure payments from your phone.',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     height: 1.5,
                     color: const Color(0xFF5C4630),
                   ),
                 ),
                 const SizedBox(height: 28),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        _StepTile(
-                          title: 'Auth foundation',
-                          subtitle: 'Secure login, signup, reset password',
-                        ),
-                        SizedBox(height: 14),
-                        _StepTile(
-                          title: 'Browse movies',
-                          subtitle: 'Movie list, details, theatres, and shows',
-                        ),
-                        SizedBox(height: 14),
-                        _StepTile(
-                          title: 'Book tickets',
-                          subtitle: 'Seats, booking summary, and payments',
-                        ),
-                      ],
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: const [
+                    _FeaturePill(
+                      icon: Icons.local_movies_rounded,
+                      label: 'Live catalogue',
                     ),
-                  ),
+                    _FeaturePill(
+                      icon: Icons.event_seat_rounded,
+                      label: 'Seat selection',
+                    ),
+                    _FeaturePill(
+                      icon: Icons.payments_rounded,
+                      label: 'Razorpay checkout',
+                    ),
+                  ],
                 ),
                 const Spacer(),
                 if (sessionController.status == SessionStatus.checking)
@@ -169,51 +163,38 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-class _StepTile extends StatelessWidget {
-  const _StepTile({required this.title, required this.subtitle});
+class _FeaturePill extends StatelessWidget {
+  const _FeaturePill({required this.icon, required this.label});
 
-  final String title;
-  final String subtitle;
+  final IconData icon;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: colorScheme.primary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: const Color(0xFF2A2118),
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          child: Icon(Icons.play_arrow_rounded, color: colorScheme.primary),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

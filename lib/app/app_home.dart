@@ -7,19 +7,9 @@ import '../features/profile/presentation/profile_screen.dart';
 Widget buildHomeForUser(AppUser user) {
   switch (user.role) {
     case AppUserRole.customer:
-      return const CustomerShell();
     case AppUserRole.client:
-      return const RoleInfoScreen(
-        title: 'Client tools are not available on mobile yet',
-        message:
-            'Use the web app for theatre and show management for now. The current mobile build is focused on the customer booking flow.',
-      );
     case AppUserRole.admin:
-      return const RoleInfoScreen(
-        title: 'Admin tools are not available on mobile yet',
-        message:
-            'Use the web app for user moderation, booking monitoring, and payment monitoring until the admin mobile flow is implemented.',
-      );
+      return const CustomerShell();
   }
 }
 
@@ -51,16 +41,22 @@ class _CustomerShellState extends State<CustomerShell> {
     ),
   ];
 
-  static const _screens = [
-    HomeScreen(),
-    TicketsPlaceholderScreen(),
-    ProfileScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      const HomeScreen(),
+      EmptyTicketsScreen(
+        onBrowseMovies: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        },
+      ),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _screens),
+      body: IndexedStack(index: _selectedIndex, children: screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
@@ -74,49 +70,10 @@ class _CustomerShellState extends State<CustomerShell> {
   }
 }
 
-class RoleInfoScreen extends StatelessWidget {
-  const RoleInfoScreen({required this.title, required this.message, super.key});
+class EmptyTicketsScreen extends StatelessWidget {
+  const EmptyTicketsScreen({required this.onBrowseMovies, super.key});
 
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('CineBook')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.construction_rounded, size: 64),
-              const SizedBox(height: 18),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class TicketsPlaceholderScreen extends StatelessWidget {
-  const TicketsPlaceholderScreen({super.key});
+  final VoidCallback onBrowseMovies;
 
   @override
   Widget build(BuildContext context) {
@@ -155,7 +112,7 @@ class TicketsPlaceholderScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 22),
                   Text(
-                    'Tickets are coming next',
+                    'No tickets yet',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       color: const Color(0xFF2A2118),
@@ -164,9 +121,15 @@ class TicketsPlaceholderScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'This tab is ready for booking history once the backend adds ticket listing. Your current profile tools are available in the Profile tab.',
+                    'Your confirmed bookings will appear here after you reserve seats for a show.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: onBrowseMovies,
+                    icon: const Icon(Icons.local_movies_rounded),
+                    label: const Text('Browse movies'),
                   ),
                 ],
               ),

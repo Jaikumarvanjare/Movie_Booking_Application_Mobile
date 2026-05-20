@@ -219,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onTap: () => _openInfoScreen(
                               title: 'About CineBook',
                               content:
-                                  'CineBook helps customers discover movies, choose theatres and shows, pick seats, and complete ticket payments from mobile. This release adds a dedicated profile area so account details and security settings are easier to manage in one place.',
+                                  'CineBook helps customers discover movies, choose theatres and shows, pick seats, and complete ticket payments from mobile.',
                             ),
                           ),
                           const Divider(height: 1),
@@ -230,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onTap: () => _openInfoScreen(
                               title: 'Help & support',
                               content:
-                                  'If something goes wrong while booking, start by retrying the request and checking your internet connection. For payment issues, keep your booking and payment IDs handy. For account issues, use the forgot-password flow from the login screen or contact the support team configured for your deployment.',
+                                  'If something goes wrong while booking, start by retrying the request and checking your internet connection. For payment issues, keep your booking and payment IDs handy. For account issues, use the forgot-password flow from the login screen.',
                             ),
                           ),
                           const Divider(height: 1),
@@ -241,7 +241,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onTap: () => _openInfoScreen(
                               title: 'Privacy policy',
                               content:
-                                  'CineBook stores the account information required to sign you in and personalize your bookings. Payment secrets stay on the backend, and the mobile app keeps only the user data needed for the signed-in experience. Your organization can extend this page later with a full legal policy once it is finalized.',
+                                  'CineBook stores the account information required to sign you in and personalize your bookings. Payment secrets stay on the backend, and the mobile app keeps only the user data needed for the signed-in experience.',
                             ),
                           ),
                           const Divider(height: 1),
@@ -252,7 +252,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onTap: () => _openInfoScreen(
                               title: 'Terms & conditions',
                               content:
-                                  'Bookings depend on seat availability, theatre schedules, and successful payment verification. Account credentials should be kept secure, and misuse of the application may lead to restricted access. This placeholder content can be replaced by the full approved terms document later.',
+                                  'Bookings depend on seat availability, theatre schedules, and successful payment verification. Account credentials should be kept secure, and misuse of the application may lead to restricted access.',
                             ),
                           ),
                         ],
