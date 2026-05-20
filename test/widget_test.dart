@@ -12,6 +12,7 @@ import 'package:movie_booking_application_mobile/features/bookings/data/booking_
 import 'package:movie_booking_application_mobile/features/movies/data/movie.dart';
 import 'package:movie_booking_application_mobile/features/movies/data/movie_repository.dart';
 import 'package:movie_booking_application_mobile/features/payments/data/payment_gateway.dart';
+import 'package:movie_booking_application_mobile/features/payments/data/payment_record.dart';
 import 'package:movie_booking_application_mobile/features/payments/data/payment_repository.dart';
 import 'package:movie_booking_application_mobile/features/payments/data/payment_verification_result.dart';
 import 'package:movie_booking_application_mobile/features/payments/data/razorpay_order.dart';
@@ -79,6 +80,18 @@ class FakeAuthRepository implements AuthRepository {
     final user = _currentUser;
     _session = _session!.copyWith(user: user);
     return user;
+  }
+
+  @override
+  Future<AppUser> updateUser(
+    String id, {
+    AppUserRole? role,
+    String? status,
+  }) async {
+    return _currentUser.copyWith(
+      role: role ?? _currentUser.role,
+      status: status ?? _currentUser.status,
+    );
   }
 
   @override
@@ -159,12 +172,14 @@ final _fakeMovies = [
 ];
 
 class FakeMovieRepository implements MovieRepository {
+  final List<Movie> _movies = List<Movie>.from(_fakeMovies);
+
   @override
   Future<List<Movie>> fetchMovies({String? query}) async {
     if (query == null || query.trim().isEmpty) {
-      return _fakeMovies;
+      return _movies;
     }
-    return _fakeMovies
+    return _movies
         .where(
           (movie) =>
               movie.name.toLowerCase().contains(query.trim().toLowerCase()),
@@ -174,7 +189,56 @@ class FakeMovieRepository implements MovieRepository {
 
   @override
   Future<Movie> fetchMovieById(String id) async {
-    return _fakeMovies.firstWhere((movie) => movie.id == id);
+    return _movies.firstWhere((movie) => movie.id == id);
+  }
+
+  @override
+  Future<Movie> createMovie({
+    required String name,
+    required String description,
+    required List<String> casts,
+    required String trailerUrl,
+    required String language,
+    required String releaseDate,
+    required String director,
+    required String releaseStatus,
+    required String poster,
+  }) async {
+    final movie = Movie(
+      id: name.toLowerCase().replaceAll(' ', '-'),
+      name: name,
+      description: description,
+      casts: casts,
+      trailerUrl: trailerUrl,
+      language: language,
+      releaseDate: DateTime.tryParse(releaseDate),
+      director: director,
+      releaseStatus: releaseStatus,
+      poster: poster,
+    );
+    _movies.add(movie);
+    return movie;
+  }
+
+  @override
+  Future<Movie> updateMovie(
+    String id, {
+    String? name,
+    String? description,
+    List<String>? casts,
+    String? trailerUrl,
+    String? language,
+    String? releaseDate,
+    String? director,
+    String? releaseStatus,
+    String? poster,
+  }) async {
+    return fetchMovieById(id);
+  }
+
+  @override
+  Future<void> deleteMovie(String id) async {
+    _movies.removeWhere((movie) => movie.id == id);
   }
 }
 
@@ -191,11 +255,78 @@ const _fakeTheatres = [
 
 class FakeTheatreRepository implements TheatreRepository {
   @override
-  Future<List<Theatre>> fetchTheatres({required String movieId}) async {
+  Future<List<Theatre>> fetchTheatres({
+    String? movieId,
+    String? city,
+    int? pincode,
+    String? name,
+    int? limit,
+    int? skip,
+  }) async {
     if (movieId == 'midnight-metro') {
       return _fakeTheatres;
     }
     return const <Theatre>[];
+  }
+
+  @override
+  Future<Theatre> fetchTheatreById(String id) async {
+    return _fakeTheatres.firstWhere((theatre) => theatre.id == id);
+  }
+
+  @override
+  Future<Theatre> createTheatre({
+    required String name,
+    String? description,
+    required String city,
+    required int pincode,
+    String? address,
+  }) async {
+    return Theatre(
+      id: name.toLowerCase().replaceAll(' ', '-'),
+      name: name,
+      city: city,
+      pincode: pincode,
+      description: description,
+      address: address,
+    );
+  }
+
+  @override
+  Future<Theatre> updateTheatre(
+    String id, {
+    String? name,
+    String? description,
+    String? city,
+    int? pincode,
+    String? address,
+  }) async {
+    return fetchTheatreById(id);
+  }
+
+  @override
+  Future<void> deleteTheatre(String id) async {}
+
+  @override
+  Future<Theatre> updateTheatreMovies(
+    String id, {
+    required List<String> movieIds,
+    required bool insert,
+  }) async {
+    return fetchTheatreById(id);
+  }
+
+  @override
+  Future<List<Movie>> fetchTheatreMovies(String id) async {
+    return _fakeMovies;
+  }
+
+  @override
+  Future<bool> checkTheatreMovie({
+    required String theatreId,
+    required String movieId,
+  }) async {
+    return theatreId == 'nova-cinemas' && movieId == 'midnight-metro';
   }
 }
 
@@ -214,27 +345,148 @@ final _fakeShows = [
 class FakeShowRepository implements ShowRepository {
   @override
   Future<List<MovieShow>> fetchShows({
-    required String theatreId,
-    required String movieId,
+    String? theatreId,
+    String? movieId,
   }) async {
     return _fakeShows
         .where((show) => show.theatreId == theatreId && show.movieId == movieId)
         .toList(growable: false);
   }
+
+  @override
+  Future<MovieShow> fetchShowById(String id) async {
+    return _fakeShows.firstWhere((show) => show.id == id);
+  }
+
+  @override
+  Future<MovieShow> createShow({
+    required String theatreId,
+    required String movieId,
+    required DateTime timing,
+    required int noOfSeats,
+    required double price,
+    String? seatConfiguration,
+    String? format,
+  }) async {
+    return MovieShow(
+      id: 'show_123',
+      theatreId: theatreId,
+      movieId: movieId,
+      timing: timing,
+      noOfSeats: noOfSeats,
+      price: price,
+      seatConfiguration: seatConfiguration,
+      format: format,
+    );
+  }
+
+  @override
+  Future<MovieShow> updateShow(
+    String id, {
+    DateTime? timing,
+    int? noOfSeats,
+    double? price,
+    String? seatConfiguration,
+    String? format,
+  }) async {
+    return fetchShowById(id);
+  }
+
+  @override
+  Future<void> deleteShow(String id) async {}
 }
 
 class FakeBookingRepository implements BookingRepository {
+  final List<BookingRecord> _bookings = [];
+
   @override
   Future<BookingRecord> createBooking(BookingDraft bookingDraft) async {
-    return BookingRecord(
+    final booking = BookingRecord(
       id: 'booking_123',
       status: 'PROCESSING',
       totalCost: bookingDraft.totalCost,
+      theatreId: bookingDraft.theatre.id,
+      movieId: bookingDraft.movie.id,
+      timing: bookingDraft.show.timing,
+      noOfSeats: bookingDraft.noOfSeats,
     );
+    _bookings.add(booking);
+    return booking;
+  }
+
+  @override
+  Future<List<BookingRecord>> fetchBookings() async {
+    return _bookings;
+  }
+
+  @override
+  Future<List<BookingRecord>> fetchAllBookings() async {
+    return _bookings;
+  }
+
+  @override
+  Future<BookingRecord> fetchBookingById(String id) async {
+    return _bookings.firstWhere((booking) => booking.id == id);
+  }
+
+  @override
+  Future<BookingRecord> updateBooking(
+    String id, {
+    DateTime? timing,
+    int? noOfSeats,
+    double? totalCost,
+    String? status,
+    String? seat,
+  }) async {
+    return BookingRecord(
+      id: id,
+      status: status ?? 'PROCESSING',
+      totalCost: totalCost ?? 0,
+      timing: timing,
+      noOfSeats: noOfSeats,
+      seat: seat,
+    );
+  }
+
+  @override
+  Future<BookingRecord> cancelBooking(String id) async {
+    return updateBooking(id, status: 'CANCELLED');
   }
 }
 
 class FakePaymentRepository implements PaymentRepository {
+  @override
+  Future<PaymentRecord> createPayment({
+    required String bookingId,
+    required double amount,
+    String? razorpayPaymentId,
+    String? razorpayOrderId,
+  }) async {
+    return PaymentRecord(
+      id: 'payment_123',
+      amount: amount,
+      status: 'SUCCESSFULL',
+      bookingId: bookingId,
+      razorpayPaymentId: razorpayPaymentId,
+      razorpayOrderId: razorpayOrderId,
+    );
+  }
+
+  @override
+  Future<List<PaymentRecord>> fetchPayments() async {
+    return const <PaymentRecord>[];
+  }
+
+  @override
+  Future<PaymentRecord> fetchPaymentById(String id) async {
+    return const PaymentRecord(
+      id: 'payment_123',
+      amount: 240,
+      status: 'SUCCESSFULL',
+      bookingId: 'booking_123',
+    );
+  }
+
   @override
   Future<RazorpayOrder> createRazorpayOrder({
     required String bookingId,
@@ -323,10 +575,7 @@ void main() {
     await tester.pumpWidget(buildTestApp());
 
     expect(find.text('CineBook Mobile'), findsOneWidget);
-    expect(
-      find.text('Book the next show without the desktop detour.'),
-      findsOneWidget,
-    );
+    expect(find.text('Movie tickets, made simple.'), findsOneWidget);
     expect(find.text('Continue to login'), findsOneWidget);
   });
 

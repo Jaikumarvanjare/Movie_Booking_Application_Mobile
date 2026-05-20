@@ -25,6 +25,83 @@ class MovieApiService {
     final item = _readObject(response);
     return Movie.fromJson(item);
   }
+
+  Future<Movie> createMovie({
+    required String name,
+    required String description,
+    required List<String> casts,
+    required String trailerUrl,
+    required String language,
+    required String releaseDate,
+    required String director,
+    required String releaseStatus,
+    required String poster,
+  }) async {
+    final response = await _apiClient.post(
+      '/movies',
+      data: {
+        'name': name,
+        'description': description,
+        'casts': casts,
+        'trailerUrl': trailerUrl,
+        'language': language,
+        'releaseDate': releaseDate,
+        'director': director,
+        'releaseStatus': releaseStatus,
+        'poster': poster,
+      },
+    );
+    return Movie.fromJson(_readObject(response));
+  }
+
+  Future<Movie> updateMovie(
+    String id, {
+    String? name,
+    String? description,
+    List<String>? casts,
+    String? trailerUrl,
+    String? language,
+    String? releaseDate,
+    String? director,
+    String? releaseStatus,
+    String? poster,
+  }) async {
+    final payload = <String, dynamic>{};
+    if (name != null) {
+      payload['name'] = name;
+    }
+    if (description != null) {
+      payload['description'] = description;
+    }
+    if (casts != null) {
+      payload['casts'] = casts;
+    }
+    if (trailerUrl != null) {
+      payload['trailerUrl'] = trailerUrl;
+    }
+    if (language != null) {
+      payload['language'] = language;
+    }
+    if (releaseDate != null) {
+      payload['releaseDate'] = releaseDate;
+    }
+    if (director != null) {
+      payload['director'] = director;
+    }
+    if (releaseStatus != null) {
+      payload['releaseStatus'] = releaseStatus;
+    }
+    if (poster != null) {
+      payload['poster'] = poster;
+    }
+
+    final response = await _apiClient.patch('/movies/$id', data: payload);
+    return Movie.fromJson(_readObject(response));
+  }
+
+  Future<void> deleteMovie(String id) async {
+    await _apiClient.delete('/movies/$id');
+  }
 }
 
 List<Map<String, dynamic>> _readList(ApiResponse response) {

@@ -71,6 +71,11 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AppUser> updateUser(String id, {AppUserRole? role, String? status}) {
+    return _authApiService.updateUser(id, role: role, status: status);
+  }
+
+  @override
   Future<String> signUp({
     required String name,
     required String email,

@@ -66,6 +66,27 @@ class AuthApiService {
     );
   }
 
+  Future<AppUser> updateUser(
+    String id, {
+    AppUserRole? role,
+    String? status,
+  }) async {
+    final payload = <String, dynamic>{};
+    if (role != null) {
+      payload['userRole'] = role.name.toUpperCase();
+    }
+    if (status != null) {
+      payload['userStatus'] = status;
+    }
+
+    final response = await _apiClient.patch('/user/$id', data: payload);
+    return _userFromResponse(
+      response,
+      emptyDataMessage:
+          'The updated user response did not include account details.',
+    );
+  }
+
   Future<String> changePassword({
     required String currentPassword,
     required String newPassword,

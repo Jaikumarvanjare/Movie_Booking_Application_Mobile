@@ -9,6 +9,8 @@ abstract class AuthRepository {
 
   Future<AppUser> updateProfile({required String name});
 
+  Future<AppUser> updateUser(String id, {AppUserRole? role, String? status});
+
   Future<String> signUp({
     required String name,
     required String email,
