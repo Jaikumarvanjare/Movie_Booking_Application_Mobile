@@ -22,6 +22,7 @@ class RemoteAuthRepository implements AuthRepository {
 
     return AuthSession(
       token: storedSession.token,
+      expiresAt: storedSession.tokenExpiresAt,
       user: AppUser(
         id: storedSession.userId,
         email: storedSession.email,
@@ -51,6 +52,7 @@ class RemoteAuthRepository implements AuthRepository {
         role: session.user.role.name.toUpperCase(),
         status: session.user.status,
         createdAt: session.user.createdAt,
+        tokenExpiresAt: session.expiresAt,
       ),
     );
     return session;
@@ -127,6 +129,7 @@ class RemoteAuthRepository implements AuthRepository {
         role: user.role.name.toUpperCase(),
         status: user.status,
         createdAt: user.createdAt ?? storedSession.createdAt,
+        tokenExpiresAt: storedSession.tokenExpiresAt,
       ),
     );
   }

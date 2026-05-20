@@ -70,7 +70,7 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<void> refreshProfile() async {
-    if (_session == null) {
+    if (!await _ensureActiveSession()) {
       return;
     }
 
@@ -87,7 +87,7 @@ class SessionController extends ChangeNotifier {
 
   Future<AppUser> updateProfile({required String name}) async {
     final currentSession = _session;
-    if (currentSession == null) {
+    if (currentSession == null || !await _ensureActiveSession()) {
       throw const ApiException(message: 'You need to sign in again.');
     }
 
@@ -107,7 +107,7 @@ class SessionController extends ChangeNotifier {
     required String currentPassword,
     required String newPassword,
   }) async {
-    if (_session == null) {
+    if (_session == null || !await _ensureActiveSession()) {
       throw const ApiException(message: 'You need to sign in again.');
     }
 
@@ -130,6 +130,21 @@ class SessionController extends ChangeNotifier {
     _status = SessionStatus.unauthenticated;
     _lastErrorMessage = null;
     notifyListeners();
+  }
+
+  Future<bool> _ensureActiveSession() async {
+    final currentSession = _session;
+    if (currentSession == null) {
+      return false;
+    }
+    if (!currentSession.isExpired) {
+      return true;
+    }
+
+    await signOut();
+    _lastErrorMessage = 'Your session expired. Please sign in again.';
+    notifyListeners();
+    return false;
   }
 }
 

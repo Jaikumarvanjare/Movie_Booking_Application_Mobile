@@ -37,13 +37,26 @@ class AppUser {
 }
 
 class AuthSession {
-  const AuthSession({required this.token, required this.user});
+  const AuthSession({required this.token, required this.user, this.expiresAt});
 
   final String token;
   final AppUser user;
+  final DateTime? expiresAt;
 
-  AuthSession copyWith({String? token, AppUser? user}) {
-    return AuthSession(token: token ?? this.token, user: user ?? this.user);
+  bool get isExpired {
+    final expiry = expiresAt;
+    if (expiry == null) {
+      return false;
+    }
+    return DateTime.now().toUtc().isAfter(expiry.toUtc());
+  }
+
+  AuthSession copyWith({String? token, AppUser? user, DateTime? expiresAt}) {
+    return AuthSession(
+      token: token ?? this.token,
+      user: user ?? this.user,
+      expiresAt: expiresAt ?? this.expiresAt,
+    );
   }
 }
 

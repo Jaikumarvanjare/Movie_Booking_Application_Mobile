@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/api_response.dart';
@@ -124,7 +126,11 @@ AuthSession _sessionFromResponse(ApiResponse response) {
     );
   }
 
-  return AuthSession(token: token, user: user);
+  return AuthSession(
+    token: token,
+    user: user,
+    expiresAt: _readJwtExpiry(token),
+  );
 }
 
 AppUser _userFromResponse(
@@ -196,5 +202,34 @@ String? _readFirstString(Map<String, dynamic> source, List<String> keys) {
       return value;
     }
   }
+  return null;
+}
+
+DateTime? _readJwtExpiry(String token) {
+  final parts = token.split('.');
+  if (parts.length < 2) {
+    return null;
+  }
+
+  try {
+    final payload = utf8.decode(
+      base64Url.decode(base64Url.normalize(parts[1])),
+    );
+    final json = jsonDecode(payload);
+    if (json is! Map<String, dynamic>) {
+      return null;
+    }
+
+    final exp = json['exp'];
+    if (exp is num) {
+      return DateTime.fromMillisecondsSinceEpoch(
+        exp.toInt() * 1000,
+        isUtc: true,
+      );
+    }
+  } catch (_) {
+    return null;
+  }
+
   return null;
 }
