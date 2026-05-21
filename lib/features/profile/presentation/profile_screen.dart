@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../auth/data/auth_session.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../../auth/presentation/session_controller.dart';
+import '../../payments/presentation/payment_history_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -67,6 +68,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _openPaymentHistory() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const PaymentHistoryScreen()),
+    );
   }
 
   Future<void> _openInfoScreen({
@@ -199,6 +206,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             subtitle: const Text('Update your login password'),
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: _openChangePassword,
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            leading: const Icon(Icons.payments_outlined),
+                            title: const Text('Payment history'),
+                            subtitle: const Text('View checkout transactions'),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: _openPaymentHistory,
                           ),
                         ],
                       ),
