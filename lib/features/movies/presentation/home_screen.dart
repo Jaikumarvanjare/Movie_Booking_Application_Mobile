@@ -16,6 +16,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   Future<List<Movie>>? _moviesFuture;
   bool _isInitialized = false;
+  String _statusFilter = 'ALL';
+  String _languageFilter = 'ALL';
 
   @override
   void didChangeDependencies() {
@@ -72,33 +74,30 @@ class _HomeScreenState extends State<HomeScreen> {
               }
 
               final movies = snapshot.data ?? const <Movie>[];
-              final nowShowing = movies
+              final filteredMovies = _filterMovies(movies);
+              final languages = _languagesFor(movies);
+              final nowShowing = filteredMovies
                   .where((movie) => movie.isNowShowing)
                   .toList(growable: false);
               final featuredMovie = nowShowing.isNotEmpty
                   ? nowShowing.first
-                  : movies.isNotEmpty
-                  ? movies.first
+                  : filteredMovies.isNotEmpty
+                  ? filteredMovies.first
                   : null;
-              final comingSoon = movies
+              final comingSoon = filteredMovies
                   .where((movie) => !movie.isNowShowing)
                   .toList(growable: false);
 
-              if (movies.isEmpty) {
+              if (filteredMovies.isEmpty) {
                 return _HomeMessageState(
                   icon: Icons.movie_filter_outlined,
                   title: 'No movies found',
-                  message: _searchController.text.trim().isEmpty
-                      ? 'Once the backend starts returning movie data, your catalogue will appear here.'
-                      : 'Try a different movie name or clear the search.',
-                  actionLabel: _searchController.text.trim().isEmpty
-                      ? 'Retry'
-                      : 'Clear search',
+                  message: _hasActiveFilters
+                      ? 'Try a different movie name, language, or release filter.'
+                      : 'Once the backend starts returning movie data, your catalogue will appear here.',
+                  actionLabel: _hasActiveFilters ? 'Clear filters' : 'Retry',
                   onPressed: () {
-                    if (_searchController.text.trim().isNotEmpty) {
-                      _searchController.clear();
-                    }
-                    _loadMovies();
+                    _clearFilters();
                   },
                 );
               }
@@ -122,6 +121,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         controller: _searchController,
                         colorScheme: colorScheme,
                         onSearch: _loadMovies,
+                      ),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 14)),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    sliver: SliverToBoxAdapter(
+                      child: _MovieFilterBar(
+                        statusFilter: _statusFilter,
+                        languageFilter: _languageFilter,
+                        languages: languages,
+                        onStatusChanged: (value) {
+                          setState(() {
+                            _statusFilter = value;
+                          });
+                        },
+                        onLanguageChanged: (value) {
+                          setState(() {
+                            _languageFilter = value;
+                          });
+                        },
                       ),
                     ),
                   ),
@@ -181,6 +201,45 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute<void>(builder: (_) => MovieDetailsScreen(movie: movie)),
     );
   }
+
+  bool get _hasActiveFilters {
+    return _searchController.text.trim().isNotEmpty ||
+        _statusFilter != 'ALL' ||
+        _languageFilter != 'ALL';
+  }
+
+  List<Movie> _filterMovies(List<Movie> movies) {
+    return movies
+        .where((movie) {
+          final matchesStatus =
+              _statusFilter == 'ALL' || movie.releaseStatus == _statusFilter;
+          final matchesLanguage =
+              _languageFilter == 'ALL' ||
+              movie.language.toLowerCase() == _languageFilter.toLowerCase();
+          return matchesStatus && matchesLanguage;
+        })
+        .toList(growable: false);
+  }
+
+  List<String> _languagesFor(List<Movie> movies) {
+    final languages =
+        movies
+            .map((movie) => movie.language.trim())
+            .where((language) => language.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    return languages;
+  }
+
+  void _clearFilters() {
+    _searchController.clear();
+    setState(() {
+      _statusFilter = 'ALL';
+      _languageFilter = 'ALL';
+    });
+    _loadMovies();
+  }
 }
 
 class _HomeHeader extends StatelessWidget {
@@ -228,6 +287,62 @@ class _HomeHeader extends StatelessWidget {
           child: Icon(
             Icons.notifications_none_rounded,
             color: colorScheme.primary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MovieFilterBar extends StatelessWidget {
+  const _MovieFilterBar({
+    required this.statusFilter,
+    required this.languageFilter,
+    required this.languages,
+    required this.onStatusChanged,
+    required this.onLanguageChanged,
+  });
+
+  final String statusFilter;
+  final String languageFilter;
+  final List<String> languages;
+  final ValueChanged<String> onStatusChanged;
+  final ValueChanged<String> onLanguageChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ChoiceChip(
+          label: const Text('All'),
+          selected: statusFilter == 'ALL',
+          onSelected: (_) => onStatusChanged('ALL'),
+        ),
+        ChoiceChip(
+          label: const Text('Now showing'),
+          selected: statusFilter == 'NOW_SHOWING',
+          onSelected: (_) => onStatusChanged('NOW_SHOWING'),
+        ),
+        ChoiceChip(
+          label: const Text('Coming soon'),
+          selected: statusFilter == 'UPCOMING',
+          onSelected: (_) => onStatusChanged('UPCOMING'),
+        ),
+        PopupMenuButton<String>(
+          tooltip: 'Filter by language',
+          onSelected: onLanguageChanged,
+          itemBuilder: (context) {
+            return [
+              const PopupMenuItem(value: 'ALL', child: Text('All languages')),
+              for (final language in languages)
+                PopupMenuItem(value: language, child: Text(language)),
+            ];
+          },
+          child: Chip(
+            avatar: const Icon(Icons.language_rounded, size: 18),
+            label: Text(languageFilter == 'ALL' ? 'Language' : languageFilter),
           ),
         ),
       ],

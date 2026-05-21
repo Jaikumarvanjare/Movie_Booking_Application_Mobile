@@ -19,6 +19,7 @@ class ShowListScreen extends StatefulWidget {
 
 class _ShowListScreenState extends State<ShowListScreen> {
   late Future<List<MovieShow>> _showsFuture;
+  DateTime? _selectedDate;
 
   @override
   void initState() {
@@ -104,6 +105,13 @@ class _ShowListScreenState extends State<ShowListScreen> {
     }
 
     final shows = snapshot.data ?? const <MovieShow>[];
+    final dates = _uniqueShowDates(shows);
+    final filteredShows = _selectedDate == null
+        ? shows
+        : shows
+              .where((show) => _isSameDay(show.timing, _selectedDate!))
+              .toList(growable: false);
+
     if (shows.isEmpty) {
       return _InfoCard(
         icon: Icons.schedule_rounded,
@@ -114,9 +122,47 @@ class _ShowListScreenState extends State<ShowListScreen> {
       );
     }
 
+    if (filteredShows.isEmpty) {
+      return Column(
+        children: [
+          _ShowDateFilter(
+            dates: dates,
+            selectedDate: _selectedDate,
+            onSelected: (date) {
+              setState(() {
+                _selectedDate = date;
+              });
+            },
+          ),
+          const SizedBox(height: 14),
+          _InfoCard(
+            icon: Icons.event_busy_rounded,
+            title: 'No shows on this date',
+            message: 'Choose another date to view available showtimes.',
+            actionLabel: 'Show all dates',
+            onPressed: () {
+              setState(() {
+                _selectedDate = null;
+              });
+            },
+          ),
+        ],
+      );
+    }
+
     return Column(
       children: [
-        for (final show in shows) ...[
+        _ShowDateFilter(
+          dates: dates,
+          selectedDate: _selectedDate,
+          onSelected: (date) {
+            setState(() {
+              _selectedDate = date;
+            });
+          },
+        ),
+        const SizedBox(height: 14),
+        for (final show in filteredShows) ...[
           _ShowCard(
             movie: widget.movie,
             theatre: widget.theatre,
@@ -126,6 +172,42 @@ class _ShowListScreenState extends State<ShowListScreen> {
           const SizedBox(height: 14),
         ],
       ],
+    );
+  }
+}
+
+class _ShowDateFilter extends StatelessWidget {
+  const _ShowDateFilter({
+    required this.dates,
+    required this.selectedDate,
+    required this.onSelected,
+  });
+
+  final List<DateTime> dates;
+  final DateTime? selectedDate;
+  final ValueChanged<DateTime?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          ChoiceChip(
+            label: const Text('All dates'),
+            selected: selectedDate == null,
+            onSelected: (_) => onSelected(null),
+          ),
+          for (final date in dates)
+            ChoiceChip(
+              label: Text(_dateChipLabel(date)),
+              selected: selectedDate != null && _isSameDay(selectedDate!, date),
+              onSelected: (_) => onSelected(date),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -170,6 +252,32 @@ class _ShowHeader extends StatelessWidget {
       ],
     );
   }
+}
+
+List<DateTime> _uniqueShowDates(List<MovieShow> shows) {
+  final dates = <DateTime>[];
+  for (final show in shows) {
+    final date = DateTime(show.timing.year, show.timing.month, show.timing.day);
+    if (!dates.any((existing) => _isSameDay(existing, date))) {
+      dates.add(date);
+    }
+  }
+  dates.sort();
+  return dates;
+}
+
+bool _isSameDay(DateTime first, DateTime second) {
+  return first.year == second.year &&
+      first.month == second.month &&
+      first.day == second.day;
+}
+
+String _dateChipLabel(DateTime date) {
+  final now = DateTime.now();
+  if (_isSameDay(date, now)) {
+    return 'Today';
+  }
+  return '${date.day}/${date.month}';
 }
 
 class _ShowCard extends StatelessWidget {

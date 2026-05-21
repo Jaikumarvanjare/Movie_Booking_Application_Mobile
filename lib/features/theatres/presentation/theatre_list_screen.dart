@@ -16,6 +16,9 @@ class TheatreListScreen extends StatefulWidget {
 }
 
 class _TheatreListScreenState extends State<TheatreListScreen> {
+  final _nameController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _pincodeController = TextEditingController();
   late Future<List<Theatre>> _theatresFuture;
 
   @override
@@ -30,8 +33,23 @@ class _TheatreListScreenState extends State<TheatreListScreen> {
     setState(() {
       _theatresFuture = context.read<TheatreRepository>().fetchTheatres(
         movieId: widget.movie.id,
+        name: _nameController.text.trim().isEmpty
+            ? null
+            : _nameController.text.trim(),
+        city: _cityController.text.trim().isEmpty
+            ? null
+            : _cityController.text.trim(),
+        pincode: int.tryParse(_pincodeController.text.trim()),
       );
     });
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _cityController.dispose();
+    _pincodeController.dispose();
+    super.dispose();
   }
 
   @override
@@ -57,6 +75,24 @@ class _TheatreListScreenState extends State<TheatreListScreen> {
                     padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
                     sliver: SliverToBoxAdapter(
                       child: _TheatreHeader(movie: widget.movie, theme: theme),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 18)),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    sliver: SliverToBoxAdapter(
+                      child: _TheatreFilterCard(
+                        nameController: _nameController,
+                        cityController: _cityController,
+                        pincodeController: _pincodeController,
+                        onApply: _reload,
+                        onClear: () {
+                          _nameController.clear();
+                          _cityController.clear();
+                          _pincodeController.clear();
+                          _reload();
+                        },
+                      ),
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 18)),
@@ -125,6 +161,93 @@ class _TheatreListScreenState extends State<TheatreListScreen> {
           const SizedBox(height: 14),
         ],
       ],
+    );
+  }
+}
+
+class _TheatreFilterCard extends StatelessWidget {
+  const _TheatreFilterCard({
+    required this.nameController,
+    required this.cityController,
+    required this.pincodeController,
+    required this.onApply,
+    required this.onClear,
+  });
+
+  final TextEditingController nameController;
+  final TextEditingController cityController;
+  final TextEditingController pincodeController;
+  final VoidCallback onApply;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: nameController,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Theatre name',
+                prefixIcon: Icon(Icons.search_rounded),
+              ),
+              onSubmitted: (_) => onApply(),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: cityController,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'City',
+                      prefixIcon: Icon(Icons.location_city_rounded),
+                    ),
+                    onSubmitted: (_) => onApply(),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: pincodeController,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.search,
+                    decoration: const InputDecoration(
+                      labelText: 'Pincode',
+                      prefixIcon: Icon(Icons.pin_drop_outlined),
+                    ),
+                    onSubmitted: (_) => onApply(),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onClear,
+                    icon: const Icon(Icons.clear_rounded),
+                    label: const Text('Clear'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: onApply,
+                    icon: const Icon(Icons.tune_rounded),
+                    label: const Text('Apply'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
