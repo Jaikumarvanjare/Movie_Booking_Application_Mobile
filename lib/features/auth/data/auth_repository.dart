@@ -17,9 +17,12 @@ abstract class AuthRepository {
     required String password,
   });
 
+  Future<String> forgotPassword({required String email});
+
   Future<String> resetPassword({
     required String email,
-    required String password,
+    required String otp,
+    required String newPassword,
   });
 
   Future<String> changePassword({

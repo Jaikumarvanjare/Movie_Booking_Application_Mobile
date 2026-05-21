@@ -104,11 +104,17 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<String> forgotPassword({required String email}) async {
+    return 'OTP sent to your email.';
+  }
+
+  @override
   Future<String> resetPassword({
     required String email,
-    required String password,
+    required String otp,
+    required String newPassword,
   }) async {
-    _savedPassword = password;
+    _savedPassword = newPassword;
     return 'Password updated successfully. Please sign in.';
   }
 

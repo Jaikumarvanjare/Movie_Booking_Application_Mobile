@@ -337,8 +337,10 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _otpController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _otpSent = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isSubmitting = false;
@@ -346,12 +348,51 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _otpController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _requestOtp() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final message = await context.read<AuthRepository>().forgotPassword(
+        email: _emailController.text.trim().toLowerCase(),
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _otpSent = true;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _submitReset() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -363,7 +404,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     try {
       final message = await context.read<AuthRepository>().resetPassword(
         email: _emailController.text.trim().toLowerCase(),
-        password: _passwordController.text,
+        otp: _otpController.text.trim(),
+        newPassword: _passwordController.text,
       );
       if (!mounted) {
         return;
@@ -392,7 +434,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return _AuthScaffold(
       title: 'Reset password',
-      subtitle: 'Enter your email and a new password to update your account.',
+      subtitle: _otpSent
+          ? 'Enter the OTP sent to your email and choose a new password.'
+          : 'Verify your account email before choosing a new password.',
       showBackButton: true,
       child: Form(
         key: _formKey,
@@ -409,70 +453,108 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 prefixIcon: Icon(Icons.mail_outline_rounded),
               ),
               validator: _validateEmail,
+              enabled: !_otpSent || !_isSubmitting,
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _passwordController,
-              obscureText: _obscurePassword,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: 'New password',
-                prefixIcon: const Icon(Icons.lock_reset_rounded),
-                suffixIcon: IconButton(
-                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
+            if (_otpSent) ...[
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _otpController,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                maxLength: 6,
+                decoration: const InputDecoration(
+                  labelText: 'OTP',
+                  prefixIcon: Icon(Icons.pin_outlined),
+                  counterText: '',
+                ),
+                validator: _validateOtp,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: 'New password',
+                  prefixIcon: const Icon(Icons.lock_reset_rounded),
+                  suffixIcon: IconButton(
+                    tooltip: _obscurePassword
+                        ? 'Show password'
+                        : 'Hide password',
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
                   ),
                 ),
+                validator: _validatePassword,
               ),
-              validator: _validatePassword,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _confirmPasswordController,
-              obscureText: _obscureConfirmPassword,
-              textInputAction: TextInputAction.done,
-              decoration: InputDecoration(
-                labelText: 'Confirm new password',
-                prefixIcon: const Icon(Icons.verified_user_outlined),
-                suffixIcon: IconButton(
-                  tooltip: _obscureConfirmPassword
-                      ? 'Show password'
-                      : 'Hide password',
-                  onPressed: () {
-                    setState(() {
-                      _obscureConfirmPassword = !_obscureConfirmPassword;
-                    });
-                  },
-                  icon: Icon(
-                    _obscureConfirmPassword
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: _obscureConfirmPassword,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  labelText: 'Confirm new password',
+                  prefixIcon: const Icon(Icons.verified_user_outlined),
+                  suffixIcon: IconButton(
+                    tooltip: _obscureConfirmPassword
+                        ? 'Show password'
+                        : 'Hide password',
+                    onPressed: () {
+                      setState(() {
+                        _obscureConfirmPassword = !_obscureConfirmPassword;
+                      });
+                    },
+                    icon: Icon(
+                      _obscureConfirmPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
                   ),
                 ),
+                validator: (value) {
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return _validatePassword(value);
+                },
+                onFieldSubmitted: (_) => _submitReset(),
               ),
-              validator: (value) {
-                if (value != _passwordController.text) {
-                  return 'Passwords do not match';
-                }
-                return _validatePassword(value);
-              },
-              onFieldSubmitted: (_) => _submit(),
-            ),
+            ],
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _isSubmitting ? null : _submit,
+              onPressed: _isSubmitting
+                  ? null
+                  : (_otpSent ? _submitReset : _requestOtp),
               child: Text(
-                _isSubmitting ? 'Updating password...' : 'Update password',
+                _isSubmitting
+                    ? (_otpSent ? 'Updating password...' : 'Sending OTP...')
+                    : (_otpSent ? 'Update password' : 'Send OTP'),
               ),
             ),
+            if (_otpSent) ...[
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () {
+                        setState(() {
+                          _otpSent = false;
+                          _otpController.clear();
+                          _passwordController.clear();
+                          _confirmPasswordController.clear();
+                        });
+                      },
+                child: const Text('Use a different email'),
+              ),
+            ],
           ],
         ),
       ),
@@ -634,5 +716,16 @@ String? _validatePassword(String? value) {
     return 'Password must be at least 6 characters';
   }
 
+  return null;
+}
+
+String? _validateOtp(String? value) {
+  final otp = value?.trim() ?? '';
+  if (otp.isEmpty) {
+    return 'Enter the OTP sent to your email';
+  }
+  if (otp.length < 4) {
+    return 'Enter a valid OTP';
+  }
   return null;
 }

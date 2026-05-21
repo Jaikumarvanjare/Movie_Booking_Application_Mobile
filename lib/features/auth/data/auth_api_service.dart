@@ -37,13 +37,25 @@ class AuthApiService {
         : response.message;
   }
 
+  Future<String> forgotPassword({required String email}) async {
+    final response = await _apiClient.post(
+      '/auth/forgot-password',
+      data: {'email': email},
+    );
+
+    return response.message.isEmpty
+        ? 'OTP sent to your email.'
+        : response.message;
+  }
+
   Future<String> resetPassword({
     required String email,
-    required String password,
+    required String otp,
+    required String newPassword,
   }) async {
-    final response = await _apiClient.patch(
-      '/auth/reset',
-      data: {'email': email, 'password': password},
+    final response = await _apiClient.post(
+      '/auth/reset-password',
+      data: {'email': email, 'otp': otp, 'newPassword': newPassword},
     );
 
     return response.message.isEmpty

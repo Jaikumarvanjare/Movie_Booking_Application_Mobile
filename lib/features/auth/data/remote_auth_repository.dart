@@ -87,11 +87,21 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<String> forgotPassword({required String email}) {
+    return _authApiService.forgotPassword(email: email);
+  }
+
+  @override
   Future<String> resetPassword({
     required String email,
-    required String password,
+    required String otp,
+    required String newPassword,
   }) {
-    return _authApiService.resetPassword(email: email, password: password);
+    return _authApiService.resetPassword(
+      email: email,
+      otp: otp,
+      newPassword: newPassword,
+    );
   }
 
   @override
