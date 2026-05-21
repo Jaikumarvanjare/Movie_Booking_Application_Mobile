@@ -415,6 +415,7 @@ class FakeBookingRepository implements BookingRepository {
       movieId: bookingDraft.movie.id,
       timing: bookingDraft.show.timing,
       noOfSeats: bookingDraft.noOfSeats,
+      seat: bookingDraft.seatLabels,
     );
     _bookings.add(booking);
     return booking;
@@ -444,14 +445,25 @@ class FakeBookingRepository implements BookingRepository {
     String? status,
     String? seat,
   }) async {
-    return BookingRecord(
+    final currentIndex = _bookings.indexWhere((booking) => booking.id == id);
+    final current = currentIndex == -1 ? null : _bookings[currentIndex];
+    final updated = BookingRecord(
       id: id,
-      status: status ?? 'PROCESSING',
-      totalCost: totalCost ?? 0,
-      timing: timing,
-      noOfSeats: noOfSeats,
-      seat: seat,
+      status: status ?? current?.status ?? 'PROCESSING',
+      totalCost: totalCost ?? current?.totalCost ?? 0,
+      theatreId: current?.theatreId,
+      movieId: current?.movieId,
+      userId: current?.userId,
+      timing: timing ?? current?.timing,
+      noOfSeats: noOfSeats ?? current?.noOfSeats,
+      seat: seat ?? current?.seat,
     );
+    if (currentIndex == -1) {
+      _bookings.add(updated);
+    } else {
+      _bookings[currentIndex] = updated;
+    }
+    return updated;
   }
 
   @override
@@ -763,6 +775,15 @@ void main() {
     expect(find.text('Now showing'), findsOneWidget);
     expect(find.text('Email address'), findsNothing);
     expect(find.text('Password'), findsNothing);
+
+    await tester.tap(find.text('Tickets'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('My Bookings'), findsOneWidget);
+    expect(find.text('Processing'), findsOneWidget);
+    expect(find.text('Pay now'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('A1, A2'), findsOneWidget);
   });
 
   testWidgets('Profile tab renders customer details and member since', (

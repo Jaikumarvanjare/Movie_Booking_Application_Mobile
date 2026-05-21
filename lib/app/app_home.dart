@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../features/auth/data/auth_session.dart';
+import '../features/bookings/presentation/my_bookings_screen.dart';
 import '../features/movies/presentation/home_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 
@@ -45,7 +46,7 @@ class _CustomerShellState extends State<CustomerShell> {
   Widget build(BuildContext context) {
     final screens = [
       const HomeScreen(),
-      EmptyTicketsScreen(
+      MyBookingsScreen(
         onBrowseMovies: () {
           setState(() {
             _selectedIndex = 0;
@@ -65,77 +66,6 @@ class _CustomerShellState extends State<CustomerShell> {
           });
         },
         destinations: _destinations,
-      ),
-    );
-  }
-}
-
-class EmptyTicketsScreen extends StatelessWidget {
-  const EmptyTicketsScreen({required this.onBrowseMovies, super.key});
-
-  final VoidCallback onBrowseMovies;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: colorScheme.outlineVariant),
-                    ),
-                    child: Icon(
-                      Icons.confirmation_number_rounded,
-                      size: 36,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  Text(
-                    'No tickets yet',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: const Color(0xFF2A2118),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Your confirmed bookings will appear here after you reserve seats for a show.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: onBrowseMovies,
-                    icon: const Icon(Icons.local_movies_rounded),
-                    label: const Text('Browse movies'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
