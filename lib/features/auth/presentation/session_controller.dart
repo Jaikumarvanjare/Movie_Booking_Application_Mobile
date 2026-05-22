@@ -85,14 +85,22 @@ class SessionController extends ChangeNotifier {
     }
   }
 
-  Future<AppUser> updateProfile({required String name}) async {
+  Future<AppUser> updateProfile({
+    required String name,
+    String? about,
+    String? profilePhotoUrl,
+  }) async {
     final currentSession = _session;
     if (currentSession == null || !await _ensureActiveSession()) {
       throw const ApiException(message: 'You need to sign in again.');
     }
 
     try {
-      final user = await _authRepository.updateProfile(name: name);
+      final user = await _authRepository.updateProfile(
+        name: name,
+        about: about,
+        profilePhotoUrl: profilePhotoUrl,
+      );
       _session = currentSession.copyWith(user: user);
       _lastErrorMessage = null;
       notifyListeners();

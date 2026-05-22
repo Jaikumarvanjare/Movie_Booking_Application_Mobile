@@ -71,8 +71,21 @@ class AuthApiService {
     );
   }
 
-  Future<AppUser> updateProfile({required String name}) async {
-    final response = await _apiClient.patch('/users/me', data: {'name': name});
+  Future<AppUser> updateProfile({
+    required String name,
+    String? about,
+    String? profilePhotoUrl,
+  }) async {
+    final response = await _apiClient.patch(
+      '/users/me',
+      data: {
+        'name': name,
+        ...about == null ? const <String, String>{} : {'about': about},
+        ...profilePhotoUrl == null
+            ? const <String, String>{}
+            : {'profilePhotoUrl': profilePhotoUrl},
+      },
+    );
     return _userFromResponse(
       response,
       emptyDataMessage:
@@ -235,6 +248,14 @@ AppUser _userFromPayload(Map<String, dynamic> data) {
         _readFirstString(user, const ['status', 'userStatus']) ??
         _readFirstString(data, const ['status', 'userStatus']) ??
         'APPROVED',
+    about:
+        _readFirstString(user, const ['about']) ??
+        _readFirstString(data, const ['about']) ??
+        '',
+    profilePhotoUrl:
+        _readFirstString(user, const ['profilePhotoUrl']) ??
+        _readFirstString(data, const ['profilePhotoUrl']) ??
+        '',
     createdAt: DateTime.tryParse(createdAt ?? ''),
   );
 }

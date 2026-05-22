@@ -29,6 +29,8 @@ class RemoteAuthRepository implements AuthRepository {
         name: storedSession.name,
         role: appUserRoleFromString(storedSession.role),
         status: storedSession.status,
+        about: storedSession.about,
+        profilePhotoUrl: storedSession.profilePhotoUrl,
         createdAt: storedSession.createdAt,
       ),
     );
@@ -51,6 +53,8 @@ class RemoteAuthRepository implements AuthRepository {
         name: session.user.name,
         role: session.user.role.name.toUpperCase(),
         status: session.user.status,
+        about: session.user.about,
+        profilePhotoUrl: session.user.profilePhotoUrl,
         createdAt: session.user.createdAt,
         tokenExpiresAt: session.expiresAt,
       ),
@@ -66,8 +70,16 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser> updateProfile({required String name}) async {
-    final user = await _authApiService.updateProfile(name: name);
+  Future<AppUser> updateProfile({
+    required String name,
+    String? about,
+    String? profilePhotoUrl,
+  }) async {
+    final user = await _authApiService.updateProfile(
+      name: name,
+      about: about,
+      profilePhotoUrl: profilePhotoUrl,
+    );
     await _persistUpdatedUser(user);
     return user;
   }
@@ -143,6 +155,8 @@ class RemoteAuthRepository implements AuthRepository {
         name: user.name,
         role: user.role.name.toUpperCase(),
         status: user.status,
+        about: user.about,
+        profilePhotoUrl: user.profilePhotoUrl,
         createdAt: user.createdAt ?? storedSession.createdAt,
         tokenExpiresAt: storedSession.tokenExpiresAt,
       ),

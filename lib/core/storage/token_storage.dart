@@ -10,6 +10,8 @@ class StoredSession {
     required this.role,
     required this.status,
     this.userId,
+    this.about = '',
+    this.profilePhotoUrl = '',
     this.createdAt,
     this.tokenExpiresAt,
   });
@@ -20,6 +22,8 @@ class StoredSession {
   final String name;
   final String role;
   final String status;
+  final String about;
+  final String profilePhotoUrl;
   final DateTime? createdAt;
   final DateTime? tokenExpiresAt;
 
@@ -48,6 +52,8 @@ class TokenStorage {
   static const _nameKey = 'auth_name';
   static const _roleKey = 'auth_role';
   static const _statusKey = 'auth_status';
+  static const _aboutKey = 'auth_about';
+  static const _profilePhotoUrlKey = 'auth_profile_photo_url';
   static const _createdAtKey = 'auth_created_at';
   static const _tokenExpiresAtKey = 'auth_token_expires_at';
 
@@ -61,6 +67,11 @@ class TokenStorage {
     await _secureStorage.write(key: _nameKey, value: session.name);
     await _secureStorage.write(key: _roleKey, value: session.role);
     await _secureStorage.write(key: _statusKey, value: session.status);
+    await _secureStorage.write(key: _aboutKey, value: session.about);
+    await _secureStorage.write(
+      key: _profilePhotoUrlKey,
+      value: session.profilePhotoUrl,
+    );
     await _secureStorage.write(
       key: _createdAtKey,
       value: session.createdAt?.toIso8601String(),
@@ -77,6 +88,8 @@ class TokenStorage {
     final name = await _secureStorage.read(key: _nameKey);
     final role = await _secureStorage.read(key: _roleKey);
     final status = await _secureStorage.read(key: _statusKey);
+    final about = await _secureStorage.read(key: _aboutKey);
+    final profilePhotoUrl = await _secureStorage.read(key: _profilePhotoUrlKey);
     final createdAt = await _secureStorage.read(key: _createdAtKey);
     final storedTokenExpiresAt = await _secureStorage.read(
       key: _tokenExpiresAtKey,
@@ -99,6 +112,8 @@ class TokenStorage {
       name: name,
       role: role,
       status: status,
+      about: about ?? '',
+      profilePhotoUrl: profilePhotoUrl ?? '',
       createdAt: DateTime.tryParse(createdAt ?? ''),
       tokenExpiresAt: tokenExpiresAt,
     );
@@ -145,6 +160,8 @@ class TokenStorage {
     await _secureStorage.delete(key: _nameKey);
     await _secureStorage.delete(key: _roleKey);
     await _secureStorage.delete(key: _statusKey);
+    await _secureStorage.delete(key: _aboutKey);
+    await _secureStorage.delete(key: _profilePhotoUrlKey);
     await _secureStorage.delete(key: _createdAtKey);
     await _secureStorage.delete(key: _tokenExpiresAtKey);
   }

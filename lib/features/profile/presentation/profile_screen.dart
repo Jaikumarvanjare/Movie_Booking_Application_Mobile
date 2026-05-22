@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _openEditProfile(AppUser user) async {
     final message = await Navigator.of(context).push<String>(
       MaterialPageRoute<String>(
-        builder: (_) => EditProfileScreen(initialName: user.name),
+        builder: (_) => EditProfileScreen(initialUser: user),
       ),
     );
 
@@ -195,7 +195,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ListTile(
                             leading: const Icon(Icons.edit_outlined),
                             title: const Text('Edit profile'),
-                            subtitle: const Text('Update your display name'),
+                            subtitle: const Text(
+                              'Update your name, about, and photo URL',
+                            ),
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: () => _openEditProfile(user),
                           ),
@@ -307,9 +309,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({required this.initialName, super.key});
+  const EditProfileScreen({required this.initialUser, super.key});
 
-  final String initialName;
+  final AppUser initialUser;
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -318,17 +320,25 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
+  late final TextEditingController _aboutController;
+  late final TextEditingController _photoUrlController;
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.initialName);
+    _nameController = TextEditingController(text: widget.initialUser.name);
+    _aboutController = TextEditingController(text: widget.initialUser.about);
+    _photoUrlController = TextEditingController(
+      text: widget.initialUser.profilePhotoUrl,
+    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _aboutController.dispose();
+    _photoUrlController.dispose();
     super.dispose();
   }
 
@@ -344,6 +354,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       await context.read<SessionController>().updateProfile(
         name: _nameController.text.trim(),
+        about: _aboutController.text.trim(),
+        profilePhotoUrl: _photoUrlController.text.trim(),
       );
       if (!mounted) {
         return;
@@ -369,7 +381,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     return _ProfileFormScaffold(
       title: 'Edit profile',
-      subtitle: 'Update the name shown across your signed-in experience.',
+      subtitle: 'Update the profile details shown across your account.',
       child: Form(
         key: _formKey,
         child: Column(
@@ -384,9 +396,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 prefixIcon: Icon(Icons.person_outline_rounded),
               ),
               validator: _validateProfileName,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _aboutController,
+              minLines: 4,
+              maxLines: 6,
+              maxLength: 500,
+              textInputAction: TextInputAction.newline,
+              decoration: const InputDecoration(
+                labelText: 'About',
+                alignLabelWithHint: true,
+                prefixIcon: Icon(Icons.notes_rounded),
+              ),
+              validator: _validateAbout,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _photoUrlController,
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(
+                labelText: 'Profile photo URL',
+                helperText: 'Optional image link',
+                prefixIcon: const Icon(Icons.image_outlined),
+                suffixIcon: IconButton(
+                  tooltip: 'Clear photo URL',
+                  onPressed: () {
+                    _photoUrlController.clear();
+                  },
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ),
+              keyboardType: TextInputType.url,
+              validator: _validateOptionalUrl,
               onFieldSubmitted: (_) => _submit(),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             FilledButton(
               onPressed: _isSaving ? null : _submit,
               child: Text(_isSaving ? 'Saving...' : 'Save changes'),
@@ -630,6 +675,7 @@ class _ProfileHero extends StatelessWidget {
     final memberSince = user.createdAt == null
         ? null
         : DateFormat.yMMMd().format(user.createdAt!);
+    final profileImage = _profileImageFor(user);
 
     return Container(
       padding: const EdgeInsets.all(22),
@@ -657,13 +703,16 @@ class _ProfileHero extends StatelessWidget {
               CircleAvatar(
                 radius: 30,
                 backgroundColor: Colors.white.withValues(alpha: 0.22),
-                child: Text(
-                  _initialsForName(user.name),
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
+                backgroundImage: profileImage,
+                child: profileImage == null
+                    ? Text(
+                        _initialsForName(user.name),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -709,6 +758,10 @@ class _ProfileHero extends StatelessWidget {
                   _ProfileDetailRow(label: 'Name', value: user.name),
                   const Divider(height: 20),
                   _ProfileDetailRow(label: 'Email', value: user.email),
+                  if (user.about.trim().isNotEmpty) ...[
+                    const Divider(height: 20),
+                    _ProfileDetailRow(label: 'About', value: user.about),
+                  ],
                   const Divider(height: 20),
                   _ProfileDetailRow(
                     label: 'Role',
@@ -975,6 +1028,18 @@ class _ProfileMessageState extends StatelessWidget {
   }
 }
 
+ImageProvider? _profileImageFor(AppUser user) {
+  final url = user.profilePhotoUrl.trim();
+  final uri = Uri.tryParse(url);
+  if (url.isEmpty ||
+      uri == null ||
+      !uri.isAbsolute ||
+      (uri.scheme != 'http' && uri.scheme != 'https')) {
+    return null;
+  }
+  return NetworkImage(url);
+}
+
 String _initialsForName(String name) {
   final parts = name
       .trim()
@@ -1031,6 +1096,29 @@ String? _validateProfileName(String? value) {
   }
   if (name.length < 2) {
     return 'Name must be at least 2 characters';
+  }
+  return null;
+}
+
+String? _validateAbout(String? value) {
+  if ((value ?? '').length > 500) {
+    return 'About must be 500 characters or fewer';
+  }
+  return null;
+}
+
+String? _validateOptionalUrl(String? value) {
+  final url = value?.trim() ?? '';
+  if (url.isEmpty) {
+    return null;
+  }
+
+  final uri = Uri.tryParse(url);
+  if (uri == null || !uri.isAbsolute) {
+    return 'Enter a valid image URL';
+  }
+  if (uri.scheme != 'http' && uri.scheme != 'https') {
+    return 'Use an http or https image URL';
   }
   return null;
 }

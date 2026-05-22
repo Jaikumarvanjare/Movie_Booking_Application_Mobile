@@ -7,7 +7,11 @@ abstract class AuthRepository {
 
   Future<AppUser> fetchProfile();
 
-  Future<AppUser> updateProfile({required String name});
+  Future<AppUser> updateProfile({
+    required String name,
+    String? about,
+    String? profilePhotoUrl,
+  });
 
   Future<List<AppUser>> fetchUsers({String? search});
 

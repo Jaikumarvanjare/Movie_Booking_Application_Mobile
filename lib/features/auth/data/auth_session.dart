@@ -7,6 +7,8 @@ class AppUser {
     required this.role,
     required this.status,
     this.id,
+    this.about = '',
+    this.profilePhotoUrl = '',
     this.createdAt,
   });
 
@@ -15,6 +17,8 @@ class AppUser {
   final String name;
   final AppUserRole role;
   final String status;
+  final String about;
+  final String profilePhotoUrl;
   final DateTime? createdAt;
 
   AppUser copyWith({
@@ -23,6 +27,8 @@ class AppUser {
     String? name,
     AppUserRole? role,
     String? status,
+    String? about,
+    String? profilePhotoUrl,
     DateTime? createdAt,
   }) {
     return AppUser(
@@ -31,6 +37,8 @@ class AppUser {
       name: name ?? this.name,
       role: role ?? this.role,
       status: status ?? this.status,
+      about: about ?? this.about,
+      profilePhotoUrl: profilePhotoUrl ?? this.profilePhotoUrl,
       createdAt: createdAt ?? this.createdAt,
     );
   }

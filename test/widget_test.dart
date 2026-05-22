@@ -32,6 +32,8 @@ class FakeAuthRepository implements AuthRepository {
   AuthSession? _session;
   String _savedPassword = _customerPassword;
   String _savedName = 'Rahul Demo';
+  String _savedAbout = '';
+  String _savedProfilePhotoUrl = '';
 
   AppUser get _currentUser => AppUser(
     id: 'customer_123',
@@ -39,6 +41,8 @@ class FakeAuthRepository implements AuthRepository {
     name: _savedName,
     role: AppUserRole.customer,
     status: 'APPROVED',
+    about: _savedAbout,
+    profilePhotoUrl: _savedProfilePhotoUrl,
     createdAt: _memberSince,
   );
 
@@ -69,7 +73,11 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser> updateProfile({required String name}) async {
+  Future<AppUser> updateProfile({
+    required String name,
+    String? about,
+    String? profilePhotoUrl,
+  }) async {
     _ensureSession();
     final trimmedName = name.trim();
     if (trimmedName.length < 2) {
@@ -77,6 +85,8 @@ class FakeAuthRepository implements AuthRepository {
     }
 
     _savedName = trimmedName;
+    _savedAbout = about ?? _savedAbout;
+    _savedProfilePhotoUrl = profilePhotoUrl ?? _savedProfilePhotoUrl;
     final user = _currentUser;
     _session = _session!.copyWith(user: user);
     return user;

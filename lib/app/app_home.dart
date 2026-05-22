@@ -94,6 +94,11 @@ class _ClientShellState extends State<ClientShell> {
       label: 'Home',
     ),
     NavigationDestination(
+      icon: Icon(Icons.local_movies_outlined),
+      selectedIcon: Icon(Icons.local_movies_rounded),
+      label: 'Movies',
+    ),
+    NavigationDestination(
       icon: Icon(Icons.theaters_outlined),
       selectedIcon: Icon(Icons.theaters_rounded),
       label: 'Theatres',
@@ -129,16 +134,9 @@ class _ClientShellState extends State<ClientShell> {
           ),
         ],
       ),
-      const _RoleModuleScreen(
-        title: 'Client Theatres',
-        subtitle: 'Theatre management will be added in the theatre step.',
-        icon: Icons.theaters_rounded,
-      ),
-      const _RoleModuleScreen(
-        title: 'Client Shows',
-        subtitle: 'Show management will be added in the shows step.',
-        icon: Icons.event_rounded,
-      ),
+      const AdminMoviesScreen(),
+      const AdminTheatresScreen(),
+      const AdminShowsScreen(),
       const ProfileScreen(),
     ];
 
@@ -309,54 +307,6 @@ class _RoleDashboardScreen extends StatelessWidget {
             separatorBuilder: (_, index) =>
                 SizedBox(height: index == 0 ? 18 : 12),
             itemCount: cards.length + 1,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleModuleScreen extends StatelessWidget {
-  const _RoleModuleScreen({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _RoleHeader(title: title, subtitle: subtitle),
-                const SizedBox(height: 24),
-                Expanded(
-                  child: Center(
-                    child: Icon(
-                      icon,
-                      size: 84,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
