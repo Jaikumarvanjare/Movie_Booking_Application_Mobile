@@ -83,6 +83,11 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<List<AppUser>> fetchUsers({String? search}) async {
+    return [_currentUser];
+  }
+
+  @override
   Future<AppUser> updateUser(
     String id, {
     AppUserRole? role,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../features/auth/data/auth_session.dart';
+import '../features/auth/presentation/admin_users_screen.dart';
 import '../features/bookings/presentation/my_bookings_screen.dart';
 import '../features/movies/presentation/admin_movies_screen.dart';
 import '../features/movies/presentation/home_screen.dart';
@@ -190,6 +191,11 @@ class _AdminShellState extends State<AdminShell> {
       selectedIcon: Icon(Icons.people_rounded),
       label: 'Users',
     ),
+    NavigationDestination(
+      icon: Icon(Icons.person_outline_rounded),
+      selectedIcon: Icon(Icons.person_rounded),
+      label: 'Profile',
+    ),
   ];
 
   @override
@@ -224,11 +230,8 @@ class _AdminShellState extends State<AdminShell> {
       const AdminMoviesScreen(),
       const AdminTheatresScreen(),
       const AdminShowsScreen(),
-      const _RoleModuleScreen(
-        title: 'Admin Users',
-        subtitle: 'User management starts after show management.',
-        icon: Icons.people_rounded,
-      ),
+      const AdminUsersScreen(),
+      const ProfileScreen(),
     ];
 
     return _BottomNavShell(

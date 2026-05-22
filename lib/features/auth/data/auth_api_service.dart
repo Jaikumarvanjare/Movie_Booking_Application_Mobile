@@ -80,6 +80,18 @@ class AuthApiService {
     );
   }
 
+  Future<List<AppUser>> fetchUsers({String? search}) async {
+    final trimmedSearch = search?.trim();
+    final response = await _apiClient.get(
+      '/users',
+      queryParameters: trimmedSearch == null || trimmedSearch.isEmpty
+          ? null
+          : {'search': trimmedSearch},
+    );
+
+    return _usersFromResponse(response);
+  }
+
   Future<AppUser> updateUser(
     String id, {
     AppUserRole? role,
@@ -151,6 +163,26 @@ AppUser _userFromResponse(
 }) {
   final data = _readResponseMap(response, emptyDataMessage: emptyDataMessage);
   return _userFromPayload(data);
+}
+
+List<AppUser> _usersFromResponse(ApiResponse response) {
+  final rawData = response.data;
+  final rawUsers = rawData is List
+      ? rawData
+      : rawData is Map
+      ? rawData['users'] ?? rawData['data'] ?? rawData['items']
+      : null;
+
+  if (rawUsers is! List) {
+    throw const ApiException(
+      message: 'The users response did not include a list of users.',
+    );
+  }
+
+  return rawUsers
+      .whereType<Map>()
+      .map((user) => _userFromPayload(Map<String, dynamic>.from(user)))
+      .toList(growable: false);
 }
 
 Map<String, dynamic> _readResponseMap(
