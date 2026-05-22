@@ -5,6 +5,7 @@ import '../features/bookings/presentation/my_bookings_screen.dart';
 import '../features/movies/presentation/admin_movies_screen.dart';
 import '../features/movies/presentation/home_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
+import '../features/shows/presentation/admin_shows_screen.dart';
 import '../features/theatres/presentation/admin_theatres_screen.dart';
 
 Widget buildHomeForUser(AppUser user) {
@@ -222,11 +223,7 @@ class _AdminShellState extends State<AdminShell> {
       ),
       const AdminMoviesScreen(),
       const AdminTheatresScreen(),
-      const _RoleModuleScreen(
-        title: 'Admin Shows',
-        subtitle: 'Show management starts after theatres.',
-        icon: Icons.event_rounded,
-      ),
+      const AdminShowsScreen(),
       const _RoleModuleScreen(
         title: 'Admin Users',
         subtitle: 'User management starts after show management.',
