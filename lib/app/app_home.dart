@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../features/auth/data/auth_session.dart';
 import '../features/bookings/presentation/my_bookings_screen.dart';
+import '../features/movies/presentation/admin_movies_screen.dart';
 import '../features/movies/presentation/home_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 
@@ -218,11 +219,7 @@ class _AdminShellState extends State<AdminShell> {
           ),
         ],
       ),
-      const _RoleModuleScreen(
-        title: 'Admin Movies',
-        subtitle: 'Movie management starts in the next admin module step.',
-        icon: Icons.local_movies_rounded,
-      ),
+      const AdminMoviesScreen(),
       const _RoleModuleScreen(
         title: 'Admin Theatres',
         subtitle: 'Theatre management starts after movies.',
