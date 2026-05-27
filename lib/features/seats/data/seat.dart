@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math' as math;
 
 import '../../shows/data/movie_show.dart';
 
@@ -36,14 +35,12 @@ List<Seat> seatsForShow(MovieShow show) {
     return const <Seat>[];
   }
 
-  // If the backend does not provide seatConfiguration yet, infer a simple
-  // layout directly from the live seat count.
-  const seatsPerRow = 8;
-  final rows = (show.noOfSeats / seatsPerRow).ceil();
-  final totalSeats = math.max(show.noOfSeats, rows * seatsPerRow);
+  // Release default: every theatre show uses a 10x10 seat map.
+  const rows = 10;
+  const seatsPerRow = 10;
 
   return [
-    for (var index = 0; index < totalSeats; index++)
+    for (var index = 0; index < rows * seatsPerRow; index++)
       Seat(
         rowNumber: (index ~/ seatsPerRow) + 1,
         seatNumber: (index % seatsPerRow) + 1,

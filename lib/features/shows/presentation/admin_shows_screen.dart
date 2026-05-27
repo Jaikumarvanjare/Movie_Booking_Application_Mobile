@@ -131,7 +131,7 @@ class _AdminShowsScreenState extends State<AdminShowsScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -194,7 +194,7 @@ class _AdminShowsScreenState extends State<AdminShowsScreen> {
                                       'Admin Shows',
                                       style: theme.textTheme.headlineMedium
                                           ?.copyWith(
-                                            color: const Color(0xFF2A2118),
+                                            color: const Color(0xFFE2E8F0),
                                             fontWeight: FontWeight.w900,
                                             height: 1.05,
                                           ),
@@ -204,7 +204,7 @@ class _AdminShowsScreenState extends State<AdminShowsScreen> {
                                       'Review schedules, pricing, and seat capacity.',
                                       style: theme.textTheme.bodyLarge
                                           ?.copyWith(
-                                            color: const Color(0xFF5C4630),
+                                            color: const Color(0xFF94A3B8),
                                             height: 1.4,
                                           ),
                                     ),
@@ -460,7 +460,7 @@ class _AdminShowFormScreenState extends State<_AdminShowFormScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -507,7 +507,7 @@ class _AdminShowFormScreenState extends State<_AdminShowFormScreen> {
                     Text(
                       _isEditing ? 'Edit Show' : 'Add Show',
                       style: theme.textTheme.headlineMedium?.copyWith(
-                        color: const Color(0xFF2A2118),
+                        color: const Color(0xFFE2E8F0),
                         fontWeight: FontWeight.w900,
                         height: 1.05,
                       ),
@@ -518,7 +518,7 @@ class _AdminShowFormScreenState extends State<_AdminShowFormScreen> {
                           ? 'Update timing, pricing, and seat information.'
                           : 'Schedule a show for an assigned theatre movie.',
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF5C4630),
+                        color: const Color(0xFF94A3B8),
                         height: 1.4,
                       ),
                     ),
@@ -759,7 +759,7 @@ class _AdminShowCard extends StatelessWidget {
                       Text(
                         movieName,
                         style: theme.textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF2A2118),
+                          color: const Color(0xFFE2E8F0),
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -892,7 +892,7 @@ class _MappingMessage extends StatelessWidget {
         ? Theme.of(context).colorScheme.primary
         : allowed
         ? const Color(0xFF2F8F46)
-        : const Color(0xFF8A5C00);
+        : const Color(0xFFF59E0B);
 
     return Container(
       width: double.infinity,

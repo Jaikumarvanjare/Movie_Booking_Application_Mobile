@@ -33,7 +33,7 @@ class RazorpayPaymentGateway implements PaymentGateway {
       'name': 'CineBook',
       'description': request.description,
       'prefill': {'name': request.userName, 'email': request.userEmail},
-      'theme': {'color': '#C44536'},
+      'theme': {'color': '#E11D48'},
     });
 
     return completer.future;

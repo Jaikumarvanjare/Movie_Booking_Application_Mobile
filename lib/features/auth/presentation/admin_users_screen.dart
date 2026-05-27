@@ -111,7 +111,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -121,7 +121,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               Text(
                 'Admin Users',
                 style: theme.textTheme.headlineMedium?.copyWith(
-                  color: const Color(0xFF2A2118),
+                  color: const Color(0xFFE2E8F0),
                   fontWeight: FontWeight.w900,
                   height: 1.05,
                 ),
@@ -130,7 +130,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               Text(
                 'Search by name, email, or user ID, then choose the right account to update.',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: const Color(0xFF5C4630),
+                  color: const Color(0xFF94A3B8),
                   height: 1.4,
                 ),
               ),
@@ -284,7 +284,7 @@ class _UserSearchCard extends StatelessWidget {
             Text(
               'Find user',
               style: theme.textTheme.titleLarge?.copyWith(
-                color: const Color(0xFF2A2118),
+                color: const Color(0xFFE2E8F0),
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -414,7 +414,7 @@ class _UserResultTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF2A2118),
+                        color: const Color(0xFFE2E8F0),
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -523,7 +523,7 @@ class _UpdatedUserCard extends StatelessWidget {
             Text(
               'Updated user',
               style: theme.textTheme.titleLarge?.copyWith(
-                color: const Color(0xFF2A2118),
+                color: const Color(0xFFE2E8F0),
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -597,7 +597,7 @@ class _UserDetailRow extends StatelessWidget {
             value,
             textAlign: TextAlign.right,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF2A2118),
+              color: const Color(0xFFE2E8F0),
               fontWeight: FontWeight.w800,
             ),
           ),

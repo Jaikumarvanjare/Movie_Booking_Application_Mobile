@@ -1,5 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../auth/data/auth_session.dart';
@@ -76,17 +78,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _openInfoScreen({
-    required String title,
-    required String content,
-  }) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ProfileInfoScreen(title: title, content: content),
-      ),
-    );
-  }
-
   Future<void> _logout() async {
     final shouldLogout = await showDialog<bool>(
       context: context,
@@ -144,7 +135,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -182,30 +173,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
                   children: [
-                    _ProfileHero(user: user),
-                    const SizedBox(height: 18),
-                    _SectionTitle(
-                      title: 'Account',
-                      subtitle: 'Manage your details and sign-in preferences.',
+                    _ProfileHero(
+                      user: user,
+                      onEditProfile: () => _openEditProfile(user),
                     ),
+                    const SizedBox(height: 18),
+                    _SectionTitle(title: 'Account', subtitle: user.email),
                     const SizedBox(height: 12),
                     Card(
                       child: Column(
                         children: [
                           ListTile(
-                            leading: const Icon(Icons.edit_outlined),
-                            title: const Text('Edit profile'),
-                            subtitle: const Text(
-                              'Update your name, about, and photo URL',
-                            ),
-                            trailing: const Icon(Icons.chevron_right_rounded),
-                            onTap: () => _openEditProfile(user),
-                          ),
-                          const Divider(height: 1),
-                          ListTile(
                             leading: const Icon(Icons.lock_reset_rounded),
                             title: const Text('Change password'),
-                            subtitle: const Text('Update your login password'),
+                            subtitle: const Text(
+                              'Use current password or email OTP',
+                            ),
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: _openChangePassword,
                           ),
@@ -216,61 +199,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             subtitle: const Text('View checkout transactions'),
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: _openPaymentHistory,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    _SectionTitle(
-                      title: 'Settings',
-                      subtitle: 'Helpful info and policies for CineBook.',
-                    ),
-                    const SizedBox(height: 12),
-                    Card(
-                      child: Column(
-                        children: [
-                          _ProfileMenuTile(
-                            icon: Icons.movie_filter_outlined,
-                            title: 'About CineBook',
-                            subtitle: 'Learn what the mobile app is built for',
-                            onTap: () => _openInfoScreen(
-                              title: 'About CineBook',
-                              content:
-                                  'CineBook helps customers discover movies, choose theatres and shows, pick seats, and complete ticket payments from mobile.',
-                            ),
-                          ),
-                          const Divider(height: 1),
-                          _ProfileMenuTile(
-                            icon: Icons.support_agent_rounded,
-                            title: 'Help & support',
-                            subtitle: 'Troubleshooting and assistance guidance',
-                            onTap: () => _openInfoScreen(
-                              title: 'Help & support',
-                              content:
-                                  'If something goes wrong while booking, start by retrying the request and checking your internet connection. For payment issues, keep your booking and payment IDs handy. For account issues, use the forgot-password flow from the login screen.',
-                            ),
-                          ),
-                          const Divider(height: 1),
-                          _ProfileMenuTile(
-                            icon: Icons.privacy_tip_outlined,
-                            title: 'Privacy policy',
-                            subtitle: 'How account and booking data is handled',
-                            onTap: () => _openInfoScreen(
-                              title: 'Privacy policy',
-                              content:
-                                  'CineBook stores the account information required to sign you in and personalize your bookings. Payment secrets stay on the backend, and the mobile app keeps only the user data needed for the signed-in experience.',
-                            ),
-                          ),
-                          const Divider(height: 1),
-                          _ProfileMenuTile(
-                            icon: Icons.description_outlined,
-                            title: 'Terms & conditions',
-                            subtitle: 'Basic usage and booking expectations',
-                            onTap: () => _openInfoScreen(
-                              title: 'Terms & conditions',
-                              content:
-                                  'Bookings depend on seat availability, theatre schedules, and successful payment verification. Account credentials should be kept secure, and misuse of the application may lead to restricted access.',
-                            ),
                           ),
                         ],
                       ),
@@ -319,6 +247,7 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _imagePicker = ImagePicker();
   late final TextEditingController _nameController;
   late final TextEditingController _aboutController;
   late final TextEditingController _photoUrlController;
@@ -377,6 +306,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<void> _pickPhoto(ImageSource source) async {
+    final image = await _imagePicker.pickImage(
+      source: source,
+      imageQuality: 78,
+      maxWidth: 900,
+    );
+    if (image == null) {
+      return;
+    }
+
+    final bytes = await image.readAsBytes();
+    final mimeType = image.mimeType ?? 'image/jpeg';
+    setState(() {
+      _photoUrlController.text = 'data:$mimeType;base64,${base64Encode(bytes)}';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return _ProfileFormScaffold(
@@ -412,24 +358,50 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               validator: _validateAbout,
             ),
             const SizedBox(height: 16),
+            _PhotoPickerSection(
+              image: _imageProviderForValue(_photoUrlController.text),
+              onGalleryPressed: () => _pickPhoto(ImageSource.gallery),
+              onCameraPressed: () => _pickPhoto(ImageSource.camera),
+              onRemovePressed: () {
+                setState(() {
+                  _photoUrlController.clear();
+                });
+              },
+            ),
             TextFormField(
               controller: _photoUrlController,
-              textInputAction: TextInputAction.done,
-              decoration: InputDecoration(
-                labelText: 'Profile photo URL',
-                helperText: 'Optional image link',
-                prefixIcon: const Icon(Icons.image_outlined),
-                suffixIcon: IconButton(
-                  tooltip: 'Clear photo URL',
-                  onPressed: () {
-                    _photoUrlController.clear();
-                  },
-                  icon: const Icon(Icons.close_rounded),
+              decoration: const InputDecoration(border: InputBorder.none),
+              style: const TextStyle(fontSize: 0, height: 0),
+              validator: _validateOptionalImageValue,
+            ),
+            const SizedBox(height: 4),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('Use image link instead'),
+              children: [
+                TextFormField(
+                  controller: _photoUrlController,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: 'Image URL',
+                    helperText: 'Optional http or https image link',
+                    prefixIcon: const Icon(Icons.link_rounded),
+                    suffixIcon: IconButton(
+                      tooltip: 'Clear image',
+                      onPressed: () {
+                        setState(() {
+                          _photoUrlController.clear();
+                        });
+                      },
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ),
+                  keyboardType: TextInputType.url,
+                  validator: _validateOptionalImageValue,
+                  onChanged: (_) => setState(() {}),
+                  onFieldSubmitted: (_) => _submit(),
                 ),
-              ),
-              keyboardType: TextInputType.url,
-              validator: _validateOptionalUrl,
-              onFieldSubmitted: (_) => _submit(),
+              ],
             ),
             const SizedBox(height: 20),
             FilledButton(
@@ -438,6 +410,87 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PhotoPickerSection extends StatelessWidget {
+  const _PhotoPickerSection({
+    required this.image,
+    required this.onGalleryPressed,
+    required this.onCameraPressed,
+    required this.onRemovePressed,
+  });
+
+  final ImageProvider? image;
+  final VoidCallback onGalleryPressed;
+  final VoidCallback onCameraPressed;
+  final VoidCallback onRemovePressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF020617).withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF1E293B)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 34,
+                backgroundColor: colorScheme.primary.withValues(alpha: 0.2),
+                backgroundImage: image,
+                child: image == null
+                    ? const Icon(Icons.person_rounded, color: Colors.white)
+                    : null,
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Profile photo',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    SizedBox(height: 4),
+                    Text('Choose from gallery or take a new photo.'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.icon(
+                onPressed: onGalleryPressed,
+                icon: const Icon(Icons.photo_library_outlined),
+                label: const Text('Gallery'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onCameraPressed,
+                icon: const Icon(Icons.photo_camera_outlined),
+                label: const Text('Camera'),
+              ),
+              TextButton.icon(
+                onPressed: onRemovePressed,
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: const Text('Remove'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -609,6 +662,47 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 _isSaving ? 'Updating password...' : 'Update password',
               ),
             ),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF020617).withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF1E293B)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Forgot current password?',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Reset with an OTP sent to your email.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF94A3B8),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _isSaving
+                        ? null
+                        : () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const ForgotPasswordScreen(),
+                              ),
+                            );
+                          },
+                    icon: const Icon(Icons.password_rounded),
+                    label: const Text('Reset with OTP'),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -616,81 +710,33 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 }
 
-class ProfileInfoScreen extends StatelessWidget {
-  const ProfileInfoScreen({
-    required this.title,
-    required this.content,
-    super.key,
-  });
-
-  final String title;
-  final String content;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Text(
-                  content,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF5C4630),
-                    height: 1.55,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ProfileHero extends StatelessWidget {
-  const _ProfileHero({required this.user});
+  const _ProfileHero({required this.user, required this.onEditProfile});
 
   final AppUser user;
+  final VoidCallback onEditProfile;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final memberSince = user.createdAt == null
-        ? null
-        : DateFormat.yMMMd().format(user.createdAt!);
     final profileImage = _profileImageFor(user);
 
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF1E293B)),
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [colorScheme.primary, colorScheme.primaryContainer],
+          colors: [Color(0xFF111827), Color(0xFF0F172A), Color(0xFF2A0F1D)],
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.22),
-            blurRadius: 28,
-            offset: const Offset(0, 18),
+            color: colorScheme.primary.withValues(alpha: 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 14),
           ),
         ],
       ),
@@ -702,7 +748,7 @@ class _ProfileHero extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 30,
-                backgroundColor: Colors.white.withValues(alpha: 0.22),
+                backgroundColor: colorScheme.primary.withValues(alpha: 0.22),
                 backgroundImage: profileImage,
                 child: profileImage == null
                     ? Text(
@@ -739,114 +785,17 @@ class _ProfileHero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _ProfileBadge(label: _roleLabel(user.role)),
-              _ProfileBadge(label: _labelize(user.status)),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Card(
-            color: Colors.white.withValues(alpha: 0.92),
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                children: [
-                  _ProfileDetailRow(label: 'Name', value: user.name),
-                  const Divider(height: 20),
-                  _ProfileDetailRow(label: 'Email', value: user.email),
-                  if (user.about.trim().isNotEmpty) ...[
-                    const Divider(height: 20),
-                    _ProfileDetailRow(label: 'About', value: user.about),
-                  ],
-                  const Divider(height: 20),
-                  _ProfileDetailRow(
-                    label: 'Role',
-                    value: _roleLabel(user.role),
-                  ),
-                  const Divider(height: 20),
-                  _ProfileDetailRow(
-                    label: 'Status',
-                    value: _labelize(user.status),
-                  ),
-                  if (memberSince != null) ...[
-                    const Divider(height: 20),
-                    _ProfileDetailRow(
-                      label: 'Member since',
-                      value: memberSince,
-                    ),
-                  ],
-                ],
-              ),
+          const SizedBox(height: 18),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.icon(
+              onPressed: onEditProfile,
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('Edit profile'),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ProfileBadge extends StatelessWidget {
-  const _ProfileBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfileDetailRow extends StatelessWidget {
-  const _ProfileDetailRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF2A2118),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -867,7 +816,7 @@ class _SectionTitle extends StatelessWidget {
         Text(
           title,
           style: theme.textTheme.titleLarge?.copyWith(
-            color: const Color(0xFF2A2118),
+            color: const Color(0xFFE2E8F0),
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -875,36 +824,11 @@ class _SectionTitle extends StatelessWidget {
         Text(
           subtitle,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF5C4630),
+            color: const Color(0xFF94A3B8),
             height: 1.45,
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ProfileMenuTile extends StatelessWidget {
-  const _ProfileMenuTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right_rounded),
-      onTap: onTap,
     );
   }
 }
@@ -930,7 +854,7 @@ class _ProfileFormScaffold extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -947,7 +871,7 @@ class _ProfileFormScaffold extends StatelessWidget {
                 Text(
                   title,
                   style: theme.textTheme.displaySmall?.copyWith(
-                    color: const Color(0xFF2A2118),
+                    color: const Color(0xFFE2E8F0),
                     fontWeight: FontWeight.w800,
                     height: 1.05,
                   ),
@@ -956,7 +880,7 @@ class _ProfileFormScaffold extends StatelessWidget {
                 Text(
                   subtitle,
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF5C4630),
+                    color: const Color(0xFF94A3B8),
                     height: 1.45,
                   ),
                 ),
@@ -1029,15 +953,31 @@ class _ProfileMessageState extends StatelessWidget {
 }
 
 ImageProvider? _profileImageFor(AppUser user) {
-  final url = user.profilePhotoUrl.trim();
-  final uri = Uri.tryParse(url);
-  if (url.isEmpty ||
+  return _imageProviderForValue(user.profilePhotoUrl);
+}
+
+ImageProvider? _imageProviderForValue(String value) {
+  final imageValue = value.trim();
+  if (imageValue.startsWith('data:image/')) {
+    final commaIndex = imageValue.indexOf(',');
+    if (commaIndex == -1) {
+      return null;
+    }
+    try {
+      return MemoryImage(base64Decode(imageValue.substring(commaIndex + 1)));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  final uri = Uri.tryParse(imageValue);
+  if (imageValue.isEmpty ||
       uri == null ||
       !uri.isAbsolute ||
       (uri.scheme != 'http' && uri.scheme != 'https')) {
     return null;
   }
-  return NetworkImage(url);
+  return NetworkImage(imageValue);
 }
 
 String _initialsForName(String name) {
@@ -1057,29 +997,6 @@ String _initialsForName(String name) {
   }
 
   return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-}
-
-String _roleLabel(AppUserRole role) {
-  switch (role) {
-    case AppUserRole.customer:
-      return 'Customer';
-    case AppUserRole.client:
-      return 'Client';
-    case AppUserRole.admin:
-      return 'Admin';
-  }
-}
-
-String _labelize(String value) {
-  return value
-      .trim()
-      .split('_')
-      .where((part) => part.isNotEmpty)
-      .map((part) {
-        final lowercase = part.toLowerCase();
-        return '${lowercase[0].toUpperCase()}${lowercase.substring(1)}';
-      })
-      .join(' ');
 }
 
 String _messageForError(BuildContext context, Object? error) {
@@ -1107,13 +1024,17 @@ String? _validateAbout(String? value) {
   return null;
 }
 
-String? _validateOptionalUrl(String? value) {
-  final url = value?.trim() ?? '';
-  if (url.isEmpty) {
+String? _validateOptionalImageValue(String? value) {
+  final imageValue = value?.trim() ?? '';
+  if (imageValue.isEmpty) {
     return null;
   }
 
-  final uri = Uri.tryParse(url);
+  if (imageValue.startsWith('data:image/')) {
+    return imageValue.contains(',') ? null : 'Choose a valid image file';
+  }
+
+  final uri = Uri.tryParse(imageValue);
   if (uri == null || !uri.isAbsolute) {
     return 'Enter a valid image URL';
   }

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/api_response.dart';
@@ -21,7 +19,7 @@ class BookingApiService {
         'timing': bookingDraft.show.timing.toIso8601String(),
         'noOfSeats': bookingDraft.noOfSeats,
         if (bookingDraft.selectedSeats.isNotEmpty)
-          'seat': _encodeSeatPayload(bookingDraft),
+          'seat': bookingDraft.seatLabels,
       },
     );
 
@@ -121,12 +119,4 @@ Map<String, dynamic> _readObject(ApiResponse response) {
   throw const ApiException(
     message: 'The booking response did not include booking details.',
   );
-}
-
-String _encodeSeatPayload(BookingDraft bookingDraft) {
-  final encoded = jsonEncode([
-    for (final seat in bookingDraft.selectedSeats)
-      {'rowNumber': seat.rowNumber, 'seatNumber': seat.seatNumber},
-  ]);
-  return encoded.replaceAll('"', "'");
 }

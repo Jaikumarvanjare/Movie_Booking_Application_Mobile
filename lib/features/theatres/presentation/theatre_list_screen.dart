@@ -62,7 +62,7 @@ class _TheatreListScreenState extends State<TheatreListScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -271,7 +271,7 @@ class _TheatreHeader extends StatelessWidget {
         Text(
           'Choose theatre',
           style: theme.textTheme.headlineMedium?.copyWith(
-            color: const Color(0xFF2A2118),
+            color: const Color(0xFFE2E8F0),
             fontWeight: FontWeight.w900,
             height: 1.05,
           ),
@@ -280,7 +280,7 @@ class _TheatreHeader extends StatelessWidget {
         Text(
           'Available theatres for ${movie.name}',
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: const Color(0xFF5C4630),
+            color: const Color(0xFF94A3B8),
             height: 1.4,
           ),
         ),
@@ -336,7 +336,7 @@ class _TheatreCard extends StatelessWidget {
                         Text(
                           theatre.name,
                           style: theme.textTheme.titleLarge?.copyWith(
-                            color: const Color(0xFF2A2118),
+                            color: const Color(0xFFE2E8F0),
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -359,7 +359,7 @@ class _TheatreCard extends StatelessWidget {
                 Text(
                   theatre.description!,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF5C4630),
+                    color: const Color(0xFF94A3B8),
                     height: 1.45,
                   ),
                 ),

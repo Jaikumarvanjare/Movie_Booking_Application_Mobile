@@ -84,7 +84,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -158,7 +158,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
                     Text(
                       'Total Rs ${_totalCost.toStringAsFixed(0)}',
                       style: theme.textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF2A2118),
+                        color: const Color(0xFFE2E8F0),
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -206,7 +206,7 @@ class _SeatHeader extends StatelessWidget {
         Text(
           'Select seats',
           style: theme.textTheme.headlineMedium?.copyWith(
-            color: const Color(0xFF2A2118),
+            color: const Color(0xFFE2E8F0),
             fontWeight: FontWeight.w900,
             height: 1.05,
           ),
@@ -215,7 +215,7 @@ class _SeatHeader extends StatelessWidget {
         Text(
           '${movie.name} at ${theatre.name} - ${show.timeLabel}',
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: const Color(0xFF5C4630),
+            color: const Color(0xFF94A3B8),
             height: 1.4,
           ),
         ),
@@ -254,7 +254,7 @@ class _ScreenIndicator extends StatelessWidget {
       height: 52,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2118),
+        color: const Color(0xFFE2E8F0),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -348,17 +348,73 @@ class _SeatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 9,
-      runSpacing: 12,
-      alignment: WrapAlignment.center,
+    final seatsByRow = <int, List<Seat>>{};
+    for (final seat in seats) {
+      seatsByRow.putIfAbsent(seat.rowNumber, () => <Seat>[]).add(seat);
+    }
+    final rowNumbers = seatsByRow.keys.toList()..sort();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 6.0;
+        const aisleWidth = 16.0;
+        final tileSize =
+            ((constraints.maxWidth - aisleWidth - (spacing * 9)) / 10).clamp(
+              26.0,
+              42.0,
+            );
+
+        return Column(
+          children: [
+            for (final rowNumber in rowNumbers) ...[
+              _SeatRow(
+                seats:
+                    (seatsByRow[rowNumber]!..sort(
+                          (a, b) => a.seatNumber.compareTo(b.seatNumber),
+                        ))
+                        .take(10)
+                        .toList(growable: false),
+                selectedSeatIds: selectedSeatIds,
+                onSeatPressed: onSeatPressed,
+                tileSize: tileSize,
+              ),
+              const SizedBox(height: 10),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SeatRow extends StatelessWidget {
+  const _SeatRow({
+    required this.seats,
+    required this.selectedSeatIds,
+    required this.onSeatPressed,
+    required this.tileSize,
+  });
+
+  final List<Seat> seats;
+  final Set<String> selectedSeatIds;
+  final ValueChanged<Seat> onSeatPressed;
+  final double tileSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        for (final seat in seats)
+        for (var index = 0; index < seats.length; index++) ...[
+          if (index == 5) const SizedBox(width: 16),
           _SeatTile(
-            seat: seat,
-            isSelected: selectedSeatIds.contains(seat.id),
-            onPressed: () => onSeatPressed(seat),
+            seat: seats[index],
+            isSelected: selectedSeatIds.contains(seats[index].id),
+            size: tileSize,
+            onPressed: () => onSeatPressed(seats[index]),
           ),
+          if (index != seats.length - 1 && index != 4) const SizedBox(width: 6),
+        ],
       ],
     );
   }
@@ -385,11 +441,13 @@ class _SeatTile extends StatelessWidget {
   const _SeatTile({
     required this.seat,
     required this.isSelected,
+    required this.size,
     required this.onPressed,
   });
 
   final Seat seat;
   final bool isSelected;
+  final double size;
   final VoidCallback onPressed;
 
   @override
@@ -400,11 +458,11 @@ class _SeatTile extends StatelessWidget {
         : isSelected
         ? colorScheme.primary
         : Colors.white;
-    final foregroundColor = isSelected ? Colors.white : const Color(0xFF2A2118);
+    final foregroundColor = isSelected ? Colors.white : const Color(0xFFE2E8F0);
 
     return SizedBox(
-      width: 42,
-      height: 42,
+      width: size,
+      height: size,
       child: Material(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),

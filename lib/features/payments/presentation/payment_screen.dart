@@ -39,7 +39,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -112,7 +112,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 Text(
                   'Rs ${widget.bookingDraft.totalCost.toStringAsFixed(0)}',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF2A2118),
+                    color: const Color(0xFFE2E8F0),
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -299,7 +299,7 @@ class _PaymentHeader extends StatelessWidget {
         Text(
           'Payment',
           style: theme.textTheme.headlineMedium?.copyWith(
-            color: const Color(0xFF2A2118),
+            color: const Color(0xFFE2E8F0),
             fontWeight: FontWeight.w900,
             height: 1.05,
           ),
@@ -308,7 +308,7 @@ class _PaymentHeader extends StatelessWidget {
         Text(
           'Create the booking, request a Razorpay order, and complete checkout.',
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: const Color(0xFF5C4630),
+            color: const Color(0xFF94A3B8),
             height: 1.4,
           ),
         ),
@@ -438,7 +438,7 @@ class _PaymentRow extends StatelessWidget {
             value,
             textAlign: TextAlign.right,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF2A2118),
+              color: const Color(0xFFE2E8F0),
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -474,7 +474,7 @@ class _BackendInfoCard extends StatelessWidget {
               style: theme.textTheme.titleLarge?.copyWith(
                 color: isError
                     ? theme.colorScheme.error
-                    : const Color(0xFF2A2118),
+                    : const Color(0xFFE2E8F0),
                 fontWeight: FontWeight.w900,
               ),
             ),

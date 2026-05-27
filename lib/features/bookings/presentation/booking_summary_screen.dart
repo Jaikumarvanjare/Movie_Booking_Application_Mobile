@@ -18,7 +18,7 @@ class BookingSummaryScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -107,7 +107,7 @@ class BookingSummaryScreen extends StatelessWidget {
                       Text(
                         'Rs ${bookingDraft.totalCost.toStringAsFixed(0)}',
                         style: theme.textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFF2A2118),
+                          color: const Color(0xFFE2E8F0),
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -152,7 +152,7 @@ class _SummaryHeader extends StatelessWidget {
         Text(
           'Booking summary',
           style: theme.textTheme.headlineMedium?.copyWith(
-            color: const Color(0xFF2A2118),
+            color: const Color(0xFFE2E8F0),
             fontWeight: FontWeight.w900,
             height: 1.05,
           ),
@@ -161,7 +161,7 @@ class _SummaryHeader extends StatelessWidget {
         Text(
           'Review your movie, theatre, show, and seats before payment.',
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: const Color(0xFF5C4630),
+            color: const Color(0xFF94A3B8),
             height: 1.4,
           ),
         ),
@@ -240,7 +240,7 @@ class _SummaryCard extends StatelessWidget {
             Text(
               title,
               style: theme.textTheme.titleLarge?.copyWith(
-                color: const Color(0xFF2A2118),
+                color: const Color(0xFFE2E8F0),
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -282,7 +282,7 @@ class _SummaryRowTile extends StatelessWidget {
             row.value,
             textAlign: TextAlign.right,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF2A2118),
+              color: const Color(0xFFE2E8F0),
               fontWeight: FontWeight.w800,
             ),
           ),

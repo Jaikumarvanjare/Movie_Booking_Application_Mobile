@@ -66,9 +66,9 @@ class _SplashScreenState extends State<SplashScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              colorScheme.primaryContainer,
-              const Color(0xFFFFF4E6),
-              const Color(0xFFFFE0B8),
+              const Color(0xFF020617),
+              const Color(0xFF0F172A),
+              const Color(0xFF1E293B),
             ],
           ),
         ),
@@ -80,57 +80,26 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
+                  width: 76,
+                  height: 76,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.82),
-                    borderRadius: BorderRadius.circular(999),
+                    color: colorScheme.primary,
+                    borderRadius: BorderRadius.circular(22),
                   ),
-                  child: Text(
-                    'CineBook Mobile',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.primary,
-                    ),
+                  child: const Icon(
+                    Icons.local_movies_rounded,
+                    color: Colors.white,
+                    size: 38,
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 22),
                 Text(
-                  'Movie tickets, made simple.',
+                  'CineBook',
                   style: theme.textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     height: 1.05,
-                    color: const Color(0xFF2A2118),
+                    color: const Color(0xFFE2E8F0),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Browse movies, choose seats, and complete secure payments from your phone.',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    height: 1.5,
-                    color: const Color(0xFF5C4630),
-                  ),
-                ),
-                const SizedBox(height: 28),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: const [
-                    _FeaturePill(
-                      icon: Icons.local_movies_rounded,
-                      label: 'Live catalogue',
-                    ),
-                    _FeaturePill(
-                      icon: Icons.event_seat_rounded,
-                      label: 'Seat selection',
-                    ),
-                    _FeaturePill(
-                      icon: Icons.payments_rounded,
-                      label: 'Razorpay checkout',
-                    ),
-                  ],
                 ),
                 const Spacer(),
                 if (sessionController.status == SessionStatus.checking)
@@ -158,42 +127,6 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FeaturePill extends StatelessWidget {
-  const _FeaturePill({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.86),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: colorScheme.primary),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: const Color(0xFF2A2118),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
       ),
     );
   }

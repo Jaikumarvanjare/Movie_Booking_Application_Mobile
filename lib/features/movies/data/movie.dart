@@ -46,7 +46,18 @@ class Movie {
   final String releaseStatus;
   final String poster;
 
-  bool get isNowShowing => releaseStatus.toUpperCase() == 'NOW_SHOWING';
+  bool get isNowShowing => normalizedReleaseStatus == 'RELEASED';
+  bool get isUpcoming => normalizedReleaseStatus == 'UPCOMING';
+
+  String get normalizedReleaseStatus {
+    final normalized = releaseStatus.trim().toUpperCase().replaceAll(' ', '_');
+    if (normalized == 'NOW_SHOWING' ||
+        normalized == 'NOWSHOWING' ||
+        normalized == 'ACTIVE') {
+      return 'RELEASED';
+    }
+    return normalized;
+  }
 
   String get releaseDateLabel {
     if (releaseDate == null) {
@@ -56,7 +67,7 @@ class Movie {
   }
 
   String get releaseStatusLabel {
-    return releaseStatus
+    return normalizedReleaseStatus
         .toLowerCase()
         .split('_')
         .map(
@@ -83,11 +94,11 @@ String? _readString(Map<String, dynamic> source, List<String> keys) {
 
 (Color, Color) _moviePaletteFor(String seed) {
   const palettes = <(Color, Color)>[
-    (Color(0xFF2A2118), Color(0xFFC44536)),
+    (Color(0xFFE2E8F0), Color(0xFFE11D48)),
     (Color(0xFF683B2B), Color(0xFFFFB45E)),
-    (Color(0xFF233142), Color(0xFFFFE0B8)),
+    (Color(0xFF233142), Color(0xFF020617)),
     (Color(0xFF2F4858), Color(0xFFFFB45E)),
-    (Color(0xFF5C4630), Color(0xFFFFF4E6)),
+    (Color(0xFF94A3B8), Color(0xFF0F172A)),
   ];
   final index = seed.isEmpty
       ? 0

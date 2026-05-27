@@ -117,7 +117,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -166,7 +166,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                           Text(
                             'My Bookings',
                             style: theme.textTheme.headlineMedium?.copyWith(
-                              color: const Color(0xFF2A2118),
+                              color: const Color(0xFFE2E8F0),
                               fontWeight: FontWeight.w900,
                               height: 1.05,
                             ),
@@ -175,7 +175,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                           Text(
                             'Track tickets, pending payments, and cancellations.',
                             style: theme.textTheme.bodyLarge?.copyWith(
-                              color: const Color(0xFF5C4630),
+                              color: const Color(0xFF94A3B8),
                               height: 1.4,
                             ),
                           ),
@@ -247,7 +247,7 @@ class _BookingCard extends StatelessWidget {
                 Text(
                   'Rs ${booking.totalCost.toStringAsFixed(0)}',
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF2A2118),
+                    color: const Color(0xFFE2E8F0),
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -257,7 +257,7 @@ class _BookingCard extends StatelessWidget {
             Text(
               timing,
               style: theme.textTheme.titleMedium?.copyWith(
-                color: const Color(0xFF2A2118),
+                color: const Color(0xFFE2E8F0),
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -270,8 +270,11 @@ class _BookingCard extends StatelessWidget {
                   icon: Icons.event_seat_outlined,
                   label: '${booking.noOfSeats ?? 0} seats',
                 ),
-                if (booking.seat != null && booking.seat!.trim().isNotEmpty)
-                  _MetaChip(icon: Icons.chair_outlined, label: booking.seat!),
+                if (booking.seatDisplayLabel.isNotEmpty)
+                  _MetaChip(
+                    icon: Icons.chair_outlined,
+                    label: booking.seatDisplayLabel,
+                  ),
                 if (booking.movieId != null)
                   _MetaChip(
                     icon: Icons.local_movies_outlined,
@@ -360,7 +363,7 @@ class _IdBadge extends StatelessWidget {
       child: Text(
         'ID ${_shortId(id)}',
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: const Color(0xFF5C4630),
+          color: const Color(0xFF94A3B8),
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -433,7 +436,7 @@ class _EmptyBookingsState extends StatelessWidget {
               'No bookings yet',
               textAlign: TextAlign.center,
               style: theme.textTheme.headlineSmall?.copyWith(
-                color: const Color(0xFF2A2118),
+                color: const Color(0xFFE2E8F0),
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -544,7 +547,7 @@ Color _statusColor(String status, ColorScheme colorScheme) {
     case 'CANCELLED':
       return colorScheme.error;
     case 'PENDING':
-      return const Color(0xFF8A5C00);
+      return const Color(0xFFF59E0B);
     case 'PROCESSING':
       return colorScheme.primary;
     default:

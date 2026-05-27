@@ -588,7 +588,7 @@ class _AuthScaffold extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               colorScheme.primaryContainer.withValues(alpha: 0.92),
-              const Color(0xFFFFF4E6),
+              const Color(0xFF0F172A),
               Colors.white,
             ],
           ),
@@ -614,7 +614,7 @@ class _AuthScaffold extends StatelessWidget {
                       Text(
                         title,
                         style: theme.textTheme.displaySmall?.copyWith(
-                          color: const Color(0xFF2A2118),
+                          color: const Color(0xFFE2E8F0),
                           fontWeight: FontWeight.w800,
                           height: 1.05,
                         ),
@@ -623,7 +623,7 @@ class _AuthScaffold extends StatelessWidget {
                       Text(
                         subtitle,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: const Color(0xFF5C4630),
+                          color: const Color(0xFF94A3B8),
                           height: 1.45,
                         ),
                       ),

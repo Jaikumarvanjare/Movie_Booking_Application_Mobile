@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../features/auth/data/auth_session.dart';
 import '../features/auth/presentation/admin_users_screen.dart';
 import '../features/bookings/presentation/my_bookings_screen.dart';
+import '../features/movies/data/movie.dart';
+import '../features/movies/data/movie_repository.dart';
 import '../features/movies/presentation/admin_movies_screen.dart';
 import '../features/movies/presentation/home_screen.dart';
+import '../features/payments/presentation/payment_history_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/shows/presentation/admin_shows_screen.dart';
+import '../features/theatres/data/theatre.dart';
 import '../features/theatres/presentation/admin_theatres_screen.dart';
+import '../features/theatres/data/theatre_repository.dart';
 
 Widget buildHomeForUser(AppUser user) {
   switch (user.role) {
@@ -37,9 +43,19 @@ class _CustomerShellState extends State<CustomerShell> {
       label: 'Movies',
     ),
     NavigationDestination(
+      icon: Icon(Icons.theaters_outlined),
+      selectedIcon: Icon(Icons.theaters_rounded),
+      label: 'Theatres',
+    ),
+    NavigationDestination(
       icon: Icon(Icons.confirmation_number_outlined),
       selectedIcon: Icon(Icons.confirmation_number_rounded),
-      label: 'Tickets',
+      label: 'Bookings',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.payments_outlined),
+      selectedIcon: Icon(Icons.payments_rounded),
+      label: 'Payments',
     ),
     NavigationDestination(
       icon: Icon(Icons.person_outline_rounded),
@@ -52,6 +68,7 @@ class _CustomerShellState extends State<CustomerShell> {
   Widget build(BuildContext context) {
     final screens = [
       const HomeScreen(),
+      const CustomerTheatresScreen(),
       MyBookingsScreen(
         onBrowseMovies: () {
           setState(() {
@@ -59,6 +76,7 @@ class _CustomerShellState extends State<CustomerShell> {
           });
         },
       ),
+      const PaymentHistoryScreen(),
       const ProfileScreen(),
     ];
 
@@ -292,7 +310,7 @@ class _RoleDashboardScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -308,6 +326,340 @@ class _RoleDashboardScreen extends StatelessWidget {
                 SizedBox(height: index == 0 ? 18 : 12),
             itemCount: cards.length + 1,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class CustomerTheatresScreen extends StatefulWidget {
+  const CustomerTheatresScreen({super.key});
+
+  @override
+  State<CustomerTheatresScreen> createState() => _CustomerTheatresScreenState();
+}
+
+class _CustomerTheatresScreenState extends State<CustomerTheatresScreen> {
+  final _cityController = TextEditingController();
+  late Future<List<Theatre>> _theatresFuture;
+  late Future<List<Movie>> _moviesFuture;
+  String? _selectedMovieId;
+
+  @override
+  void initState() {
+    super.initState();
+    _moviesFuture = context.read<MovieRepository>().fetchMovies();
+    _theatresFuture = _loadTheatres();
+  }
+
+  Future<List<Theatre>> _loadTheatres() {
+    return context.read<TheatreRepository>().fetchTheatres(
+      movieId: _selectedMovieId,
+      city: _cityController.text.trim().isEmpty
+          ? null
+          : _cityController.text.trim(),
+    );
+  }
+
+  Future<void> _refreshTheatres() async {
+    final future = _loadTheatres();
+    setState(() {
+      _theatresFuture = future;
+    });
+    await future;
+  }
+
+  void _applyFilters() {
+    setState(() {
+      _theatresFuture = _loadTheatres();
+    });
+  }
+
+  void _clearFilters() {
+    _cityController.clear();
+    setState(() {
+      _selectedMovieId = null;
+      _theatresFuture = _loadTheatres();
+    });
+  }
+
+  @override
+  void dispose() {
+    _cityController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _CustomerListScaffold<Theatre>(
+      title: 'Theatres',
+      subtitle: 'Search venues by city and movie availability.',
+      future: _theatresFuture,
+      onRefresh: _refreshTheatres,
+      emptyTitle: 'No theatres found',
+      headerChild: FutureBuilder<List<Movie>>(
+        future: _moviesFuture,
+        builder: (context, snapshot) {
+          return _TheatreSearchCard(
+            cityController: _cityController,
+            movies: snapshot.data ?? const <Movie>[],
+            selectedMovieId: _selectedMovieId,
+            onMovieChanged: (movieId) {
+              setState(() {
+                _selectedMovieId = movieId;
+              });
+              _applyFilters();
+            },
+            onApply: _applyFilters,
+            onClear: _clearFilters,
+          );
+        },
+      ),
+      itemBuilder: (context, theatre) => _DarkInfoCard(
+        icon: Icons.theaters_rounded,
+        title: theatre.name,
+        subtitle: [
+          theatre.city,
+          theatre.address,
+        ].where((value) => (value ?? '').trim().isNotEmpty).join(' - '),
+        meta: 'Pincode ${theatre.pincode}',
+      ),
+    );
+  }
+}
+
+class _CustomerListScaffold<T> extends StatelessWidget {
+  const _CustomerListScaffold({
+    required this.title,
+    required this.subtitle,
+    required this.future,
+    required this.onRefresh,
+    required this.emptyTitle,
+    required this.itemBuilder,
+    this.headerChild,
+  });
+
+  final String title;
+  final String subtitle;
+  final Future<List<T>> future;
+  final Future<void> Function() onRefresh;
+  final String emptyTitle;
+  final Widget Function(BuildContext context, T item) itemBuilder;
+  final Widget? headerChild;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
+          ),
+        ),
+        child: SafeArea(
+          child: FutureBuilder<List<T>>(
+            future: future,
+            builder: (context, snapshot) {
+              final isLoading =
+                  snapshot.connectionState != ConnectionState.done;
+              if (isLoading && !snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final items = snapshot.data ?? <T>[];
+              return RefreshIndicator(
+                onRefresh: onRefresh,
+                child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 32),
+                  itemCount: items.isEmpty
+                      ? 2 + (headerChild == null ? 0 : 1)
+                      : items.length + 1 + (headerChild == null ? 0 : 1),
+                  separatorBuilder: (_, index) =>
+                      SizedBox(height: index == 0 ? 18 : 12),
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return _RoleHeader(title: title, subtitle: subtitle);
+                    }
+
+                    if (headerChild != null && index == 1) {
+                      return headerChild!;
+                    }
+
+                    if (items.isEmpty) {
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            emptyTitle,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
+                    final itemIndex = index - 1 - (headerChild == null ? 0 : 1);
+                    return itemBuilder(context, items[itemIndex]);
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TheatreSearchCard extends StatelessWidget {
+  const _TheatreSearchCard({
+    required this.cityController,
+    required this.movies,
+    required this.selectedMovieId,
+    required this.onMovieChanged,
+    required this.onApply,
+    required this.onClear,
+  });
+
+  final TextEditingController cityController;
+  final List<Movie> movies;
+  final String? selectedMovieId;
+  final ValueChanged<String?> onMovieChanged;
+  final VoidCallback onApply;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: cityController,
+              textInputAction: TextInputAction.search,
+              decoration: const InputDecoration(
+                labelText: 'City',
+                prefixIcon: Icon(Icons.location_city_rounded),
+              ),
+              onSubmitted: (_) => onApply(),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: selectedMovieId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Movie',
+                prefixIcon: Icon(Icons.local_movies_outlined),
+              ),
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('All movies'),
+                ),
+                for (final movie in movies)
+                  DropdownMenuItem<String>(
+                    value: movie.id,
+                    child: Text(movie.name),
+                  ),
+              ],
+              onChanged: onMovieChanged,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onClear,
+                    icon: const Icon(Icons.clear_rounded),
+                    label: const Text('Clear'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: onApply,
+                    icon: const Icon(Icons.search_rounded),
+                    label: const Text('Search'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DarkInfoCard extends StatelessWidget {
+  const _DarkInfoCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.meta,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String meta;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: theme.colorScheme.primary),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFFE2E8F0),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle.isEmpty ? meta : subtitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              meta,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -330,7 +682,7 @@ class _RoleHeader extends StatelessWidget {
         Text(
           title,
           style: theme.textTheme.headlineMedium?.copyWith(
-            color: const Color(0xFF2A2118),
+            color: const Color(0xFFE2E8F0),
             fontWeight: FontWeight.w900,
             height: 1.05,
           ),
@@ -339,7 +691,7 @@ class _RoleHeader extends StatelessWidget {
         Text(
           subtitle,
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: const Color(0xFF5C4630),
+            color: const Color(0xFF94A3B8),
             height: 1.4,
           ),
         ),
@@ -392,7 +744,7 @@ class _RoleActionCard extends StatelessWidget {
                   Text(
                     data.title,
                     style: theme.textTheme.titleLarge?.copyWith(
-                      color: const Color(0xFF2A2118),
+                      color: const Color(0xFFE2E8F0),
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -400,7 +752,7 @@ class _RoleActionCard extends StatelessWidget {
                   Text(
                     data.subtitle,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: const Color(0xFF5C4630),
+                      color: const Color(0xFF94A3B8),
                       height: 1.35,
                     ),
                   ),

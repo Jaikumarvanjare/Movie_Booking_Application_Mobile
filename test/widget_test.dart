@@ -607,8 +607,8 @@ void main() {
   testWidgets('CineBook splash shell renders', (WidgetTester tester) async {
     await tester.pumpWidget(buildTestApp());
 
-    expect(find.text('CineBook Mobile'), findsOneWidget);
-    expect(find.text('Movie tickets, made simple.'), findsOneWidget);
+    expect(find.text('CineBook'), findsOneWidget);
+    expect(find.text('Movie tickets, made simple.'), findsNothing);
     expect(find.text('Continue to login'), findsOneWidget);
   });
 
@@ -791,7 +791,7 @@ void main() {
     expect(find.text('Email address'), findsNothing);
     expect(find.text('Password'), findsNothing);
 
-    await tester.tap(find.text('Tickets'));
+    await tester.tap(find.text('Bookings'));
     await tester.pumpAndSettle();
 
     expect(find.text('My Bookings'), findsOneWidget);

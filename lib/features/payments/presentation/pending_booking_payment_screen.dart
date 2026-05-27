@@ -35,7 +35,7 @@ class _PendingBookingPaymentScreenState
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFE0B8), Color(0xFFFFF4E6), Colors.white],
+            colors: [Color(0xFF020617), Color(0xFF0F172A), Color(0xFF020617)],
           ),
         ),
         child: SafeArea(
@@ -51,7 +51,7 @@ class _PendingBookingPaymentScreenState
               Text(
                 'Complete payment',
                 style: theme.textTheme.headlineMedium?.copyWith(
-                  color: const Color(0xFF2A2118),
+                  color: const Color(0xFFE2E8F0),
                   fontWeight: FontWeight.w900,
                   height: 1.05,
                 ),
@@ -60,7 +60,7 @@ class _PendingBookingPaymentScreenState
               Text(
                 'Pay the pending amount for this booking to confirm your ticket.',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: const Color(0xFF5C4630),
+                  color: const Color(0xFF94A3B8),
                   height: 1.4,
                 ),
               ),
@@ -236,7 +236,7 @@ class _DetailRow extends StatelessWidget {
             value,
             textAlign: TextAlign.right,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF2A2118),
+              color: const Color(0xFFE2E8F0),
               fontWeight: FontWeight.w800,
             ),
           ),
